@@ -1,0 +1,156 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 24px;
+  font-weight: 400;
+  font-size: 16px;
+
+  color-scheme: light;
+  /* color: rgba(255, 255, 255, 0.87); */
+  background-color: #eceff1;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+  justify-content: center;
+  text-align: center;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid rgb(192, 192, 192);
+  padding: 16px;
+  font-family: inherit;
+  cursor: pointer;
+  background-color: transparent;
+  transition: background-color 0.25s;
+}
+button:hover {
+  background-color: rgb(192, 192, 192);
+}
+
+input {
+  border-radius: 8px;
+  border: 1px solid rgb(192, 192, 192);
+  padding: 16px;
+  font-family: inherit;
+  width: calc(100% - 32px);
+}
+/* 
+input[type="checkbox"] {
+  appearance: none;
+  background-color: #fff;
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 1.15em;
+  height: 1.15em;
+  border: 0.15em solid currentColor;
+  border-radius: 0.15em;
+  transform: translateY(-0.075em);
+} */
+
+select {
+  border-radius: 8px;
+  border: 1px solid rgb(192, 192, 192);
+  padding: 16px;
+  font-family: inherit;
+  width: calc(100% - 32px);
+}
+
+/* @media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+} */
+
+section {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+section > .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #d0bc9e;
+  padding: 8px 16px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+section > .section-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+section > .section-body > div {
+  flex: 1;
+  padding: 8px;
+}
+
+.nadplata div{
+  flex: 1;
+  padding: 8px;
+  align-self: flex-end;
+}
+
+.nadplata {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* table */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  /* border: 1px solid #e0e0e0; */
+  border-radius: 8px;
+  overflow: hidden;
+  /* add padding to rows */
+  padding: 10em;
+}
+
+th {
+  padding: 0.35rem;
+  text-align: right;
+  color: #999999;
+}
+
+td {
+  padding: 0.35rem;
+  text-align: right;
+}
+
+tr {
+  padding-block: 1em;
+  transition: background-color 0.25s;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+tr:hover {
+  background-color: #efefef;
+}
+
+tr:nth-child(12n) {
+  color: #646cff;
+}
