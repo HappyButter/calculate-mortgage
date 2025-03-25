@@ -7,9 +7,9 @@ import { Rata, Nadplata } from "./types";
 import { obliczRatyMalejace, obliczRatyStale, roundToTwo } from "./utils";
 
 function App() {
-  const [kapital, setKapital] = useQueryState('kapital', parseAsFloat.withDefault(294_951.30).withOptions({ clearOnDefault: false }));
-  const [oprocentowanie, setOprocentowanie] = useQueryState('oprocentowanie', parseAsFloat.withDefault(5.61));
-  const [iloscRat, setIloscRat] = useQueryState('iloscRat', parseAsInteger.withDefault(146));
+  const [kapital, setKapital] = useQueryState('kapital', parseAsFloat.withDefault(300_000).withOptions({ clearOnDefault: false }));
+  const [oprocentowanie, setOprocentowanie] = useQueryState('oprocentowanie', parseAsFloat.withDefault(8.11));
+  const [iloscRat, setIloscRat] = useQueryState('iloscRat', parseAsInteger.withDefault(360));
   const [nadplaty, setNadplaty] = useQueryState('nadplaty', parseAsArrayOf(parseAsJson<Nadplata>((value) => value as Nadplata), ',').withDefault([]));
   const [czyRataMalejaca, setCzyRataMalejaca] = useQueryState('czyRataMalejaca', parseAsBoolean.withDefault(true));
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
