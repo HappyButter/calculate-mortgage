@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 function LoadDialog({ onClose, loadFromLocalStorage }: { onClose: () => void; loadFromLocalStorage: (name: string) => void }) {
-    const [select, setSelect] = useState("");
     const namesUsed = Object.keys(localStorage);
+    const [select, setSelect] = useState(namesUsed ? namesUsed[0] : "");
 
     return (
         <dialog open={true} style={{
@@ -33,17 +33,33 @@ function LoadDialog({ onClose, loadFromLocalStorage }: { onClose: () => void; lo
                 alignItems: "center",
             }}>
 
-                <p>Dialog</p>
-                {namesUsed.length === 0 ? <p>No data in local storage. Save one first.</p> : (
-                    <>
-                        <select value={select} onChange={(e) => setSelect(e.target.value)}>
-                            {namesUsed.map((name, index) => (
-                                <option key={`name-${index}`}>{name}</option>
-                            ))}
-                        </select>
-                        <button onClick={() => loadFromLocalStorage(select)} disabled={!namesUsed.includes(select)}>Load from local storage</button>
-                    </>)}
-                <button onClick={onClose}>Close</button>
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", width: "100%" }}>
+                    <div style={{ display: "flex", flexDirection: "column", marginBottom: "34px" }}>
+                        {namesUsed.length === 0
+                            ? "Brak danych w bazie. Najpierw zapisz konfigurację."
+                            : (
+                                <>
+                                    <label htmlFor="name">Wybierz zapis</label>
+                                    <select value={select} onChange={(e) => setSelect(e.target.value)}
+                                        style={{ marginBottom: "10px", width: "100%" }}>
+                                        {namesUsed.map((name, index) => (
+                                            <option key={`name-${index}`}>{name}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        style={!namesUsed.includes(select) ? {} : { backgroundColor: "rgb(75,175,80)", color: "white" }}
+                                        onClick={() => loadFromLocalStorage(select)} disabled={!namesUsed.includes(select)}>Load from local storage</button>
+                                </>)}
+                    </div>
+
+                    <div>
+                        <button
+                            style={{ backgroundColor: "rgb(237,129,103)", color: "white", marginLeft: "10px" }}
+                            onClick={onClose}>Zamknij
+                        </button>
+                    </div>
+
+                </div>
             </div>
         </dialog>
     )
