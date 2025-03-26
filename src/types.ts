@@ -2,6 +2,7 @@ export type Nadplata = {
     kwota: number;
     data?: Date;
     czyJednorazowa: boolean;
+    czyWyrownacDoKwoty?: boolean;
     numerRatyStart: number;
     numerRatyKoniec?: number;
   }

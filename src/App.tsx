@@ -105,8 +105,23 @@ function App() {
         <div className="section-body" style={{ display: "flex", flexDirection: "column" }} >
           {nadplaty.map((nadplata, index) => (
             <div key={`nadplata-${index}`} className="nadplata">
+              <div style={{ alignSelf: "flex-end", flex: 1 }}>
+                <label htmlFor="czyWyrownacDoKwoty">Typ nadpłaty</label>
+                <select id="czyWyrownacDoKwoty" value={nadplata.czyWyrownacDoKwoty ? 1 : 0} onChange={(e) =>
+                  setNadplaty(prev => {
+                    const newNadplaty = [...prev];
+                    newNadplaty[index].czyWyrownacDoKwoty = e.target.value === '1';
+                    newNadplaty[index].numerRatyKoniec = e.target.value === '1' ? undefined : newNadplaty[index].numerRatyStart + 1;
+                    return newNadplaty;
+                  })
+                }>
+                  <option value={1}>Wyrównaj do kwoty</option>
+                  <option value={0}>Dana kwota</option>
+                </select>
+              </div>
+
               <div>
-                <label htmlFor="kwota">Kwota nadpłaty</label>
+                <label htmlFor="kwota">{nadplata.czyWyrownacDoKwoty ? "Wyrównaj do kwoty" : "Kwota nadpłaty"}</label>
                 <input id="kwota" type="number" value={nadplata.kwota} onChange={(e) => {
                   setNadplaty(prev => {
                     const newNadplaty = [...prev];
