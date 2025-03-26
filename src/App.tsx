@@ -5,8 +5,11 @@ import LoadDialog from "./LoadDialog";
 import SaveDialog from "./SaveDialog";
 import { Rata, Nadplata } from "./types";
 import { obliczRatyMalejace, obliczRatyStale, roundToTwo } from "./utils";
+import useScreen from "./useScreen";
 
 function App() {
+  const { isMobile, orientation } = useScreen();
+
   const [kapital, setKapital] = useQueryState('kapital', parseAsFloat.withDefault(300_000).withOptions({ clearOnDefault: false }));
   const [oprocentowanie, setOprocentowanie] = useQueryState('oprocentowanie', parseAsFloat.withDefault(8.11));
   const [iloscRat, setIloscRat] = useQueryState('iloscRat', parseAsInteger.withDefault(360));
@@ -48,6 +51,18 @@ function App() {
       setCzyRataMalejaca(parsedData?.czyRataMalejaca ?? true);
     }
   }, []);
+
+  if (isMobile && orientation === 'portrait') {
+    return (
+      <div className="phone-rotation-wrapper">
+        <div className="phone">
+        </div>
+        <div className="message">
+          Najpierw obróć urządzenie ;)
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -200,37 +215,42 @@ function App() {
         <div className="section-header">
           <h3>Harmonogram spłaty kredytu</h3>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Rok</th>
-              <th>Numer raty</th>
-              <th>Kapital do spłaty</th>
-              <th>Rata</th>
-              <th>Kapitał</th>
-              <th>Odsetki</th>
-              <th>Koszt skumulowany</th>
-              <th>Nadpłaty</th>
-            </tr>
-          </thead>
-          <tbody>
-            {raty.map((rata, index) => (
-              <tr key={`rata-${index}`}>
-                <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td>
-                <td>{rata.numerRaty}</td>
-                <td>{roundToTwo(rata.kapital)} zł</td>
-                <td><b>{roundToTwo(rata.kwotaCalkowita)} zł</b></td>
-                <td>{roundToTwo(rata.kwotaKapitalu)} zł</td>
-                <td>{roundToTwo(rata.kwotaOdsetek)} zł</td>
-                <td>{roundToTwo(rata.laczneKoszty)} zł</td>
-                <td>
-                  {roundToTwo(rata.nadplaty?.reduce((a, b) => a + b.kwota, 0))} zł {rata.nadplaty?.length && rata.nadplaty?.length > 1 ? `(${rata.nadplaty?.length})` : null}
-                </td>
+
+        <div className="section-body" style={{ overflowX: "auto" }}>
+          <table>
+            <thead>
+              <tr>
+                <th>Rok</th>
+                <th>Numer raty</th>
+                <th>Kapital do spłaty</th>
+                <th>Rata</th>
+                <th>Kapitał</th>
+                <th>Odsetki</th>
+                <th>Koszt skumulowany</th>
+                <th>Nadpłaty</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {raty.map((rata, index) => (
+                <tr key={`rata-${index}`}>
+                  <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td>
+                  <td>{rata.numerRaty}</td>
+                  <td>{roundToTwo(rata.kapital)} zł</td>
+                  <td><b>{roundToTwo(rata.kwotaCalkowita)} zł</b></td>
+                  <td>{roundToTwo(rata.kwotaKapitalu)} zł</td>
+                  <td>{roundToTwo(rata.kwotaOdsetek)} zł</td>
+                  <td>{roundToTwo(rata.laczneKoszty)} zł</td>
+                  <td>
+                    {roundToTwo(rata.nadplaty?.reduce((a, b) => a + b.kwota, 0))} zł {rata.nadplaty?.length && rata.nadplaty?.length > 1 ? `(${rata.nadplaty?.length})` : null}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
+
+      <br />
 
       {isSaveDialogOpen && <SaveDialog onClose={() => setIsSaveDialogOpen(false)} saveToLocalStorage={saveToLocalStorage} />}
       {isLoadDialogOpen && <LoadDialog onClose={() => setIsLoadDialogOpen(false)} loadFromLocalStorage={loadFromLocalStorage} />}
