@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
-  "homepage" : "https://happybutter.github.io/calculate-mortgage/",
+  "homepage": "https://happybutter.github.io/calculate-mortgage/",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

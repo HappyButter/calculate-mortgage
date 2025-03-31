@@ -6,11 +6,12 @@ import SaveDialog from "./SaveDialog";
 import { Rata, Nadplata } from "./types";
 import { obliczRatyMalejace, obliczRatyStale, roundToTwo } from "./utils";
 import useScreen from "./useScreen";
+import NumberInput from "./NumberInput";
 
 function App() {
   const { isMobile, orientation } = useScreen();
 
-  const [kapital, setKapital] = useQueryState('kapital', parseAsFloat.withDefault(300_000).withOptions({ clearOnDefault: false }));
+  const [kapital, setKapital] = useQueryState('kapital', parseAsFloat.withDefault(300_000));
   const [oprocentowanie, setOprocentowanie] = useQueryState('oprocentowanie', parseAsFloat.withDefault(8.11));
   const [iloscRat, setIloscRat] = useQueryState('iloscRat', parseAsInteger.withDefault(360));
   const [nadplaty, setNadplaty] = useQueryState('nadplaty', parseAsArrayOf(parseAsJson<Nadplata>((value) => value as Nadplata), ',').withDefault([]));
@@ -66,9 +67,11 @@ function App() {
 
   return (
     <>
+      <br />
       <h1>Kalkulator kredytowy</h1>
+      <br />
 
-      <button onClick={() => setIsSaveDialogOpen(true)}>Zapisz</button>
+      <button onClick={() => setIsSaveDialogOpen(true)} style={{ marginRight: "10px" }}>Zapisz</button>
       <button onClick={() => setIsLoadDialogOpen(true)}>Załaduj konfigurację</button>
 
       <br /><br />
@@ -79,22 +82,9 @@ function App() {
         </div>
 
         <div className="section-body">
-
-          <div>
-            <label htmlFor="kapital">Kwota kredytu</label><br />
-            <input id="kapital" type="number" value={kapital} onChange={(e) => setKapital(Number(e.target.value))} />
-          </div>
-
-          <div>
-            <label htmlFor="oprocentowanie">Oprocentowanie</label><br />
-            <input id="oprocentowanie" type="number" value={oprocentowanie} onChange={(e) => setOprocentowanie(Number(e.target.value))} />
-          </div>
-
-          <div>
-            <label htmlFor="iloscRat">Ilość rat</label><br />
-            <input id="iloscRat" type="number" value={iloscRat} onChange={(e) => setIloscRat(Number(e.target.value))} />
-          </div>
-
+          <NumberInput value={kapital} onChange={setKapital} label="Kwota kredytu" inputAdornment="zł" />
+          <NumberInput value={oprocentowanie} onChange={setOprocentowanie} label="Oprocentowanie" inputAdornment="%" />
+          <NumberInput value={iloscRat} onChange={setIloscRat} label="Ilość rat" isInteger />
         </div>
 
         <div className="section-body" style={{ justifyContent: "center" }}>
@@ -110,17 +100,18 @@ function App() {
         </div>
       </section>
 
-      <br /><br />
+      <br />
 
       <section>
         <div className="section-header">
           <h3>Nadpłaty</h3>
         </div>
 
-        <div className="section-body" style={{ display: "flex", flexDirection: "column" }} >
+        <div className="section-body" style={{ display: "flex", flexDirection: "column", width: "100%" }} >
           {nadplaty.map((nadplata, index) => (
             <div key={`nadplata-${index}`} className="nadplata">
-              <div style={{ alignSelf: "flex-end", flex: 1 }}>
+
+              <div style={{ alignSelf: "flex-end", flex: 1, display: "flex", flexDirection: "column" }}>
                 <label htmlFor="czyWyrownacDoKwoty">Typ nadpłaty</label>
                 <select id="czyWyrownacDoKwoty" value={nadplata.czyWyrownacDoKwoty ? 1 : 0} onChange={(e) =>
                   setNadplaty(prev => {
@@ -135,18 +126,21 @@ function App() {
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="kwota">{nadplata.czyWyrownacDoKwoty ? "Wyrównaj do kwoty" : "Kwota nadpłaty"}</label>
-                <input id="kwota" type="number" value={nadplata.kwota} onChange={(e) => {
+
+              <NumberInput
+                styles={{ marginBottom: 0, flex: 1 }}
+                value={nadplata.kwota}
+                onChange={(value) => {
                   setNadplaty(prev => {
                     const newNadplaty = [...prev];
-                    newNadplaty[index].kwota = Number(e.target.value);
+                    newNadplaty[index].kwota = value;
                     return newNadplaty;
                   })
-                }} />
-              </div>
+                }}
+                label={nadplata.czyWyrownacDoKwoty ? "Wyrównaj do kwoty" : "Kwota nadpłaty"}
+                inputAdornment="zł" />
 
-              <div style={{ alignSelf: "flex-end", flex: 1 }}>
+              <div style={{ alignSelf: "flex-end", flex: 1, flexDirection: "column", display: "flex" }}>
                 <label htmlFor="czyJednorazowa">Częstotliwość</label>
                 <select id="czyJednorazowa" value={nadplata.czyJednorazowa ? 1 : 0} onChange={(e) =>
                   setNadplaty(prev => {
@@ -161,31 +155,35 @@ function App() {
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="numerRatyStart">{nadplata.czyJednorazowa ? "Numer raty" : "Od Kiedy"}</label>
-                <input id="numerRatyStart" type="number" value={nadplata.numerRatyStart} onChange={(e) => {
+              <NumberInput
+                styles={{ marginBottom: 0 }}
+                value={nadplata.numerRatyStart}
+                onChange={(value) => {
                   setNadplaty(prev => {
                     const newNadplaty = [...prev];
-                    newNadplaty[index].numerRatyStart = Number(e.target.value);
+                    newNadplaty[index].numerRatyStart = value;
                     return newNadplaty;
                   })
-                }} />
-              </div>
+                }}
+                label={nadplata.czyJednorazowa ? "Numer raty" : "Od Kiedy"} />
 
-              <div style={{ alignSelf: "flex-end" }}>
-                <label htmlFor="numerRatyKoniec">{nadplata.czyJednorazowa ? null : "Do Kiedy"}</label>
-                <input disabled={nadplata.czyJednorazowa} id="numerRatyKoniec" type="number" value={nadplata.numerRatyKoniec} onChange={(e) => {
+              <NumberInput
+                styles={{ marginBottom: 0 }}
+                value={nadplata.numerRatyKoniec}
+                onChange={(value) => {
                   setNadplaty(prev => {
                     const newNadplaty = [...prev];
-                    newNadplaty[index].numerRatyKoniec = Number(e.target.value);
+                    newNadplaty[index].numerRatyKoniec = value;
                     return newNadplaty;
                   })
-                }} />
-              </div>
+                }
+                }
+                label={nadplata.czyJednorazowa ? null : "Do Kiedy"}
+                disabled={nadplata.czyJednorazowa} />
 
-              <div style={{ alignSelf: "flex-end" }}>
+              <div style={{ display: "flex", flexDirection: "row", width: "calc(100% - 16px)" }}>
                 <button
-                  style={{ display: 'flex', alignSelf: "flex-start", backgroundColor: "rgb(237,129,103)", color: "white" }}
+                  style={{ alignSelf: "flex-end", backgroundColor: "rgb(237,129,103)", color: "white" }}
                   onClick={() => {
                     setNadplaty(prev => {
                       const newNadplaty = [...prev];
@@ -193,6 +191,24 @@ function App() {
                       return newNadplaty;
                     })
                   }}>Usuń</button>
+
+                <button
+                  style={{ alignSelf: "flex-end", backgroundColor: "rgb(75,175,80)", color: "white", marginLeft: "8px" }}
+                  onClick={() => {
+                    setNadplaty(prev => {
+                      const newNadplaty = [...prev];
+                      newNadplaty.push({
+                        kwota: nadplata.kwota,
+                        czyJednorazowa: nadplata.czyJednorazowa,
+                        czyWyrownacDoKwoty: nadplata.czyWyrownacDoKwoty,
+                        numerRatyStart: nadplata.numerRatyStart + 1,
+                        numerRatyKoniec: nadplata.numerRatyKoniec ? nadplata.numerRatyKoniec + 1 : undefined
+                      });
+                      return newNadplaty;
+                    })
+                   }}>
+                  Kopiuj
+                </button>
               </div>
             </div>))
           }
@@ -207,46 +223,47 @@ function App() {
             }])
           }} style={{ backgroundColor: "rgb(75,175,80)", color: "white" }}>Dodaj nadplate</button>
         </div>
+
       </section>
 
-      <br /><br />
+      <br />
 
       <section>
         <div className="section-header">
           <h3>Harmonogram spłaty kredytu</h3>
         </div>
 
-        <div className="section-body" style={{ overflowX: "auto" }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Rok</th>
-                <th>Numer raty</th>
-                <th>Kapital do spłaty</th>
-                <th>Rata</th>
-                <th>Kapitał</th>
-                <th>Odsetki</th>
-                <th>Koszt skumulowany</th>
-                <th>Nadpłaty</th>
-              </tr>
-            </thead>
-            <tbody>
-              {raty.map((rata, index) => (
-                <tr key={`rata-${index}`}>
-                  <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td>
-                  <td>{rata.numerRaty}</td>
-                  <td>{roundToTwo(rata.kapital)} zł</td>
-                  <td><b>{roundToTwo(rata.kwotaCalkowita)} zł</b></td>
-                  <td>{roundToTwo(rata.kwotaKapitalu)} zł</td>
-                  <td>{roundToTwo(rata.kwotaOdsetek)} zł</td>
-                  <td>{roundToTwo(rata.laczneKoszty)} zł</td>
-                  <td>
-                    {roundToTwo(rata.nadplaty?.reduce((a, b) => a + b.kwota, 0))} zł {rata.nadplaty?.length && rata.nadplaty?.length > 1 ? `(${rata.nadplaty?.length})` : null}
-                  </td>
+        <div className="section-body">
+            <table>
+              <thead> 
+                <tr>
+                  <th>Rok</th>
+                  <th>Numer raty</th>
+                  <th>Kapital do spłaty</th>
+                  <th>Rata</th>
+                  <th>Kapitał</th>
+                  <th>Odsetki</th>
+                  <th>Koszt skumulowany</th>
+                  <th>Nadpłaty</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {raty.map((rata, index) => (
+                  <tr key={`rata-${index}`}>
+                    <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td>
+                    <td>{rata.numerRaty}</td>
+                    <td>{roundToTwo(rata.kapital)} zł</td>
+                    <td><b>{roundToTwo(rata.kwotaCalkowita)} zł</b></td>
+                    <td>{roundToTwo(rata.kwotaKapitalu)} zł</td>
+                    <td>{roundToTwo(rata.kwotaOdsetek)} zł</td>
+                    <td>{roundToTwo(rata.laczneKoszty)} zł</td>
+                    <td>
+                      {roundToTwo(rata.nadplaty?.reduce((a, b) => a + b.kwota, 0))} zł {rata.nadplaty?.length && rata.nadplaty?.length > 1 ? `(${rata.nadplaty?.length})` : null}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
         </div>
       </section>
 

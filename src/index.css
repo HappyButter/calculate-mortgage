@@ -1,3 +1,20 @@
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+body {
+  background-color: #eceff1;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  text-align: center;
+  flex-direction: column;
+  width: 100vw;
+}
+
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 24px;
@@ -6,7 +23,8 @@
 
   color-scheme: light;
   /* color: rgba(255, 255, 255, 0.87); */
-
+  margin: 0;
+  padding: 0;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -14,33 +32,25 @@
 }
 
 
-body {
-  background-color: #eceff1;
-  margin: 0;
-  display: flex;
-  min-width: 320px;
-  min-height: 100vh;
-  justify-content: center;
-  text-align: center;
-}
 
 body > div {
   width: 70%;
+  align-self: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1400px) {
     width: 98%;
   }
 }
 
 button {
   border-radius: 8px;
-  border: 1px solid rgb(192, 192, 192);
+  border: none;
   padding: 16px;
   font-family: inherit;
   cursor: pointer;
   background-color: transparent;
   transition: background-color 0.25s;
-  
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
 }
 button:hover {
   background-color: rgb(192, 192, 192);
@@ -55,19 +65,23 @@ input {
   border: 1px solid rgb(192, 192, 192);
   padding: 16px;
   font-family: inherit;
-  width: calc(100% - 32px);
+  /* width: calc(100% - 32px); */
 }
 
 select {
   border-radius: 8px;
   border: 1px solid rgb(192, 192, 192);
-  padding: 16px;
+  padding: 15px;
   font-family: inherit;
-  width: calc(100% - 32px);
+  flex: 1;
+  width: 100%;
+  /* width: calc(100% - 32px); */
 }
 
 
 section {
+  width: 100%;
+  flex-grow: 1;
   /* border: 1px solid #e0e0e0; */
   border-radius: 8px;
   background-color: #fff;
@@ -86,7 +100,7 @@ section > .section-header {
 section > .section-body {
   display: flex;
   justify-content: space-between;
-  align-items: stretch;
+  overflow-x: auto;
 }
 
 section > .section-body > div {
@@ -94,17 +108,22 @@ section > .section-body > div {
   padding: 8px;
 }
 
-.nadplata div{
-  flex: 1;
-  padding: 8px;
-  align-self: flex-end;
-}
-
 .nadplata {
+  width: 100%;
+  flex: 1;
   display: flex;
   flex-direction: row;
   border-bottom: 1px solid #e0e0e0;
+  gap: 8px;
 }
+
+
+.nadplata > div {
+  align-self: flex-end;
+  flex: 1;
+  min-width: 0;
+}
+
 
 /* table */
 table {
@@ -121,6 +140,10 @@ th {
   padding: 0.35rem;
   text-align: right;
   color: #999999;
+  position: sticky;
+  top: 0;
+  z-index: 1; 
+  background-color: #eceff1;
 }
 
 td {
@@ -183,8 +206,46 @@ tr:nth-child(12n) {
 	}
 }
 
-@media only screen and (max-device-width: 812px) and (orientation: landscape) {
+@media only screen and (max-device-width: 812px) {
   .phone, .message {
     display: block;
   }
+
+  /* small font size on small device */
+  body {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 300;
+  }
+
+  button, input {
+    padding: 8px;
+  }
+
+  select {
+    padding: 7px;
+  }
+
+  body {
+    justify-content: none; 
+  }
+
+  section {
+    width: 100%;
+  }
+   
+  section > .section-header {
+    padding: 4px 8px;
+  }
+
+  th {
+    padding: 0.25rem;
+  }
+  td {
+    padding: 0.25rem;
+  }
+  tr {
+    padding: 0.5em;
+  }
+
 }
