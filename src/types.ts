@@ -21,5 +21,6 @@ export type Rata = {
   
 export type Zmiany = {
     nadplaty: Nadplata[];
+    dataPierwszejRaty?: string;
   }
   

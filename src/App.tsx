@@ -1,16 +1,17 @@
 import { useCallback, useMemo, useState } from "react"
-import { useQueryState, parseAsFloat, parseAsArrayOf, parseAsInteger, parseAsJson, parseAsBoolean } from 'nuqs'
+import { useQueryState, parseAsFloat, parseAsArrayOf, parseAsInteger, parseAsJson, parseAsBoolean, parseAsString } from 'nuqs'
 
 import LoadDialog from "./LoadDialog";
 import SaveDialog from "./SaveDialog";
 import { Rata, Nadplata } from "./types";
-import { obliczRatyMalejace, obliczRatyStale, roundToTwo } from "./utils";
+import { obliczRatyMalejace, obliczRatyMalejace2, obliczRatyStale, roundToTwo } from "./utils";
 import useScreen from "./useScreen";
 import NumberInput from "./NumberInput";
 
 function App() {
   const { isMobile, orientation } = useScreen();
 
+  const [dataPierwszejRaty, setDataPierwszejRaty] = useQueryState('dataPierwszejRaty', parseAsString.withDefault('2025-01-01'));
   const [kapital, setKapital] = useQueryState('kapital', parseAsFloat.withDefault(300_000));
   const [oprocentowanie, setOprocentowanie] = useQueryState('oprocentowanie', parseAsFloat.withDefault(8.11));
   const [iloscRat, setIloscRat] = useQueryState('iloscRat', parseAsInteger.withDefault(360));
@@ -32,7 +33,7 @@ function App() {
       nadplaty: []
     }
 
-    return czyRataMalejaca ? obliczRatyMalejace(rata, { nadplaty }) : obliczRatyStale(rata, { nadplaty });;
+    return czyRataMalejaca ? obliczRatyMalejace2(rata, { nadplaty, dataPierwszejRaty }) : obliczRatyStale(rata, { nadplaty });;
   }, [kapital, oprocentowanie, iloscRat, nadplaty, czyRataMalejaca]);
 
 
@@ -82,6 +83,7 @@ function App() {
         </div>
 
         <div className="section-body">
+          <input type="date" value={dataPierwszejRaty} onChange={(e) => setDataPierwszejRaty(e.target.value)} />
           <NumberInput value={kapital} onChange={setKapital} label="Kwota kredytu" inputAdornment="zł" />
           <NumberInput value={oprocentowanie} onChange={setOprocentowanie} label="Oprocentowanie" inputAdornment="%" />
           <NumberInput value={iloscRat} onChange={setIloscRat} label="Ilość rat" isInteger />
