@@ -48,7 +48,7 @@ function LoadDialog({ onClose, loadFromLocalStorage }: { onClose: () => void; lo
                                     </select>
                                     <button
                                         style={!namesUsed.includes(select) ? {} : { backgroundColor: "rgb(75,175,80)", color: "white" }}
-                                        onClick={() => loadFromLocalStorage(select)} disabled={!namesUsed.includes(select)}>Load from local storage</button>
+                                        onClick={() => {loadFromLocalStorage(select); onClose()}} disabled={!namesUsed.includes(select)}>Load from local storage</button>
                                 </>)}
                     </div>
 

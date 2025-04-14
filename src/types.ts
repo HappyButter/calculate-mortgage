@@ -1,13 +1,26 @@
+const kiedyNadplatyArray = ['W_WYBRANYM_DNIU', 'W_DNIU_RATY', 'CO_MIESIAC_W_DNIU_RATY', 'CO_MIESIAC_W_WYBRANYM_DNIU'] as const;
+export type KiedyNadplataType = typeof kiedyNadplatyArray[number];
+export const KiedyNadplata = 
+  kiedyNadplatyArray.reduce((acc, item) => {
+    acc[item] = item;
+    return acc;
+  }, {} as Record<KiedyNadplataType, KiedyNadplataType>) 
+
+
 export type Nadplata = {
     kwota: number;
-    data?: Date;
-    czyJednorazowa: boolean;
+    kiedyNadplata: KiedyNadplataType;
     czyWyrownacDoKwoty?: boolean;
-    numerRatyStart: number;
+    data?: string;
+    dataRatyStart?: string;
+    dataRatyKoniec?: string;
+    numerRatyStart?: number;
     numerRatyKoniec?: number;
   }
 
 export type Rata = {
+    data?: string;
+    czyToNadplata?: boolean;
     kapital: number;
     oprocentowanie: number;
     iloscRat: number;

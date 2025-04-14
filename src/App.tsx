@@ -1,12 +1,36 @@
 import { useCallback, useMemo, useState } from "react"
-import { useQueryState, parseAsFloat, parseAsArrayOf, parseAsInteger, parseAsJson, parseAsBoolean, parseAsString } from 'nuqs'
+import { useQueryState, parseAsFloat, parseAsInteger, parseAsBoolean, parseAsString, createParser } from 'nuqs'
 
-import LoadDialog from "./LoadDialog";
-import SaveDialog from "./SaveDialog";
-import { Rata, Nadplata } from "./types";
-import { obliczRatyMalejace, obliczRatyMalejace2, obliczRatyStale, roundToTwo } from "./utils";
+import LoadDialog from "./components/LoadDialog";
+import SaveDialog from "./components/SaveDialog";
+import { Rata, Nadplata, KiedyNadplata, KiedyNadplataType } from "./types";
+import { dateToString, obliczRatyMalejace2, obliczRatyStale, roundToTwo } from "./utils";
 import useScreen from "./useScreen";
-import NumberInput from "./NumberInput";
+import NumberInput from "./components/NumberInput";
+import DateInput from "./components/DateInput";
+import { addMonths } from "date-fns";
+
+const parseAsArrayOfNadplata = createParser<Nadplata[]>({
+  parse(query) {
+    const value = decodeURI(query);
+    if (!value) {
+      return [];
+    }
+
+    const parsedValue = JSON.parse(value);
+    if (!Array.isArray(parsedValue)) {
+      return [];
+    }
+
+    return parsedValue as Nadplata[];
+  },
+
+  serialize(state) {
+    return encodeURI(JSON.stringify(state));
+  }
+
+})
+
 
 function App() {
   const { isMobile, orientation } = useScreen();
@@ -15,13 +39,16 @@ function App() {
   const [kapital, setKapital] = useQueryState('kapital', parseAsFloat.withDefault(300_000));
   const [oprocentowanie, setOprocentowanie] = useQueryState('oprocentowanie', parseAsFloat.withDefault(8.11));
   const [iloscRat, setIloscRat] = useQueryState('iloscRat', parseAsInteger.withDefault(360));
-  const [nadplaty, setNadplaty] = useQueryState('nadplaty', parseAsArrayOf(parseAsJson<Nadplata>((value) => value as Nadplata), ',').withDefault([]));
+  const [nadplaty, setNadplaty] = useQueryState('nadplaty', parseAsArrayOfNadplata.withDefault([]));
   const [czyRataMalejaca, setCzyRataMalejaca] = useQueryState('czyRataMalejaca', parseAsBoolean.withDefault(true));
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
+  const [key, setKey] = useState(0);
+
+  const remountChild = useCallback(() => setKey(prev => prev + 1), []);
 
   const raty = useMemo(() => {
-    const rata: Rata = {
+    const rataStart: Rata = {
       kapital: kapital,
       oprocentowanie: oprocentowanie,
       iloscRat: iloscRat,
@@ -33,26 +60,30 @@ function App() {
       nadplaty: []
     }
 
-    return czyRataMalejaca ? obliczRatyMalejace2(rata, { nadplaty, dataPierwszejRaty }) : obliczRatyStale(rata, { nadplaty });;
-  }, [kapital, oprocentowanie, iloscRat, nadplaty, czyRataMalejaca]);
+    return czyRataMalejaca ? obliczRatyMalejace2(rataStart, { nadplaty, dataPierwszejRaty }) : obliczRatyStale(rataStart, { nadplaty });;
+  }, [kapital, oprocentowanie, iloscRat, nadplaty, czyRataMalejaca, dataPierwszejRaty]);
 
 
   const saveToLocalStorage = useCallback((name: string) => {
-    const data = JSON.stringify({ kapital, oprocentowanie, iloscRat, nadplaty, czyRataMalejaca });
+    const data = JSON.stringify({ kapital, oprocentowanie, iloscRat, nadplaty, czyRataMalejaca, dataPierwszejRaty });
     localStorage.setItem(name, data);
-  }, [kapital, oprocentowanie, iloscRat, nadplaty]);
+  }, [kapital, oprocentowanie, iloscRat, nadplaty, czyRataMalejaca, dataPierwszejRaty]);
 
-  const loadFromLocalStorage = useCallback((name: string) => {
+  const loadFromLocalStorage = (name: string) => {
     const data = localStorage.getItem(name);
     if (data) {
       const parsedData = JSON.parse(data);
+
       setKapital(prev => parsedData?.kapital ?? prev);
       setOprocentowanie(prev => parsedData?.oprocentowanie ?? prev);
       setIloscRat(prev => parsedData?.iloscRat ?? prev);
       setNadplaty(prev => parsedData?.nadplaty ?? prev);
       setCzyRataMalejaca(parsedData?.czyRataMalejaca ?? true);
+      setDataPierwszejRaty(parsedData?.dataPierwszejRaty ?? new Date().toISOString().split('T')[0]);
+
+      remountChild();
     }
-  }, []);
+  }
 
   if (isMobile && orientation === 'portrait') {
     return (
@@ -83,10 +114,10 @@ function App() {
         </div>
 
         <div className="section-body">
-          <input type="date" value={dataPierwszejRaty} onChange={(e) => setDataPierwszejRaty(e.target.value)} />
-          <NumberInput value={kapital} onChange={setKapital} label="Kwota kredytu" inputAdornment="zł" />
-          <NumberInput value={oprocentowanie} onChange={setOprocentowanie} label="Oprocentowanie" inputAdornment="%" />
-          <NumberInput value={iloscRat} onChange={setIloscRat} label="Ilość rat" isInteger />
+          <NumberInput value={kapital} onChange={setKapital} label="Kwota kredytu" inputAdornment="zł" key={`kapital_${key}`} />
+          <NumberInput value={oprocentowanie} onChange={setOprocentowanie} label="Oprocentowanie" inputAdornment="%" key={`oprocentowanie_${key}`} />
+          <NumberInput value={iloscRat} onChange={setIloscRat} label="Ilość rat" isInteger key={`iloscRat_${key}`} />
+          <DateInput value={dataPierwszejRaty} onChange={setDataPierwszejRaty} label="Data pierwszej raty" required />
         </div>
 
         <div className="section-body" style={{ justifyContent: "center" }}>
@@ -119,7 +150,6 @@ function App() {
                   setNadplaty(prev => {
                     const newNadplaty = [...prev];
                     newNadplaty[index].czyWyrownacDoKwoty = e.target.value === '1';
-                    newNadplaty[index].numerRatyKoniec = e.target.value === '1' ? undefined : newNadplaty[index].numerRatyStart + 1;
                     return newNadplaty;
                   })
                 }>
@@ -139,49 +169,122 @@ function App() {
                     return newNadplaty;
                   })
                 }}
-                label={nadplata.czyWyrownacDoKwoty ? "Wyrównaj do kwoty" : "Kwota nadpłaty"}
+                label={nadplata.czyWyrownacDoKwoty ? "Wyrównaj do kwoty" : "Kwota"}
                 inputAdornment="zł" />
 
               <div style={{ alignSelf: "flex-end", flex: 1, flexDirection: "column", display: "flex" }}>
-                <label htmlFor="czyJednorazowa">Częstotliwość</label>
-                <select id="czyJednorazowa" value={nadplata.czyJednorazowa ? 1 : 0} onChange={(e) =>
+                <label htmlFor="kiedyNadplata">Kiedy</label>
+                <select id="kiedyNadplata" value={nadplata.kiedyNadplata} onChange={(e) =>
                   setNadplaty(prev => {
                     const newNadplaty = [...prev];
+                    const newValue = e.target.value;
+
+                    if (!newValue) {
+                      return newNadplaty;
+                    }
+                    newNadplaty[index].kiedyNadplata = newValue as KiedyNadplataType;
+
+                    if (newValue === KiedyNadplata.W_DNIU_RATY || newValue === KiedyNadplata.CO_MIESIAC_W_DNIU_RATY) {
+                      newNadplaty[index].dataRatyStart = undefined;
+                      newNadplaty[index].dataRatyKoniec = undefined;
+                      const numerRatyStart = index === 0 ? 1 : ((newNadplaty[index - 1].numerRatyStart ?? 0) + 1);
+                      newNadplaty[index].numerRatyStart = numerRatyStart;
+                      newNadplaty[index].numerRatyKoniec = newValue === KiedyNadplata.W_DNIU_RATY ? undefined : (numerRatyStart + 1);
+                      
+                    } else if (newValue === KiedyNadplata.W_WYBRANYM_DNIU || newValue === KiedyNadplata.CO_MIESIAC_W_WYBRANYM_DNIU) {
+                      newNadplaty[index].numerRatyStart = undefined;
+                      newNadplaty[index].numerRatyKoniec = undefined;
+                      const dataRatyStart = index === 0 ? new Date().toISOString().split('T')[0] : (newNadplaty[index - 1].dataRatyStart ?? new Date().toISOString().split('T')[0]);
+                      newNadplaty[index].dataRatyStart = dataRatyStart;
+                      newNadplaty[index].dataRatyKoniec = newValue === KiedyNadplata.W_WYBRANYM_DNIU ? undefined : dateToString(addMonths(new Date(dataRatyStart), 1));
+                    }
+
+                    return newNadplaty;
+                  })
+                }>
+                  <option value={KiedyNadplata.W_WYBRANYM_DNIU}>W wybranym dniu</option>
+                  <option value={KiedyNadplata.W_DNIU_RATY}>W dniu raty</option>
+                  <option value={KiedyNadplata.CO_MIESIAC_W_DNIU_RATY}>Co miesiąc w dniu raty</option>
+                  <option value={KiedyNadplata.CO_MIESIAC_W_WYBRANYM_DNIU}>Co miesiąc w wybranym dniu</option>
+                </select>
+              </div>
+
+
+              {/* <div style={{ alignSelf: "flex-end", flex: 1, flexDirection: "column", display: "flex" }}>
+                <label htmlFor="czyJednorazowa">Kiedy</label>
+                <select id="czyJednorazowa" value={nadplata.data ? 2 : nadplata.czyJednorazowa ? 1 : 0} onChange={(e) =>
+                  setNadplaty(prev => {
+                    const newNadplaty = [...prev];
+                    newNadplaty[index].data = e.target.value === '2' ? new Date().toISOString().split('T')[0] : undefined;
                     newNadplaty[index].czyJednorazowa = e.target.value === '1';
                     newNadplaty[index].numerRatyKoniec = e.target.value === '1' ? undefined : newNadplaty[index].numerRatyStart + 1;
                     return newNadplaty;
                   })
                 }>
-                  <option value={1}>Jednorazowo</option>
+                  <option value={2}>W wybranym dniu</option>
+                  <option value={1}>W dniu raty</option>
                   <option value={0}>Co miesiąc</option>
                 </select>
-              </div>
+              </div> */}
 
-              <NumberInput
-                styles={{ marginBottom: 0 }}
-                value={nadplata.numerRatyStart}
-                onChange={(value) => {
-                  setNadplaty(prev => {
-                    const newNadplaty = [...prev];
-                    newNadplaty[index].numerRatyStart = value;
-                    return newNadplaty;
-                  })
-                }}
-                label={nadplata.czyJednorazowa ? "Numer raty" : "Od Kiedy"} />
+              {
+                nadplata.kiedyNadplata === KiedyNadplata.W_WYBRANYM_DNIU || nadplata.kiedyNadplata === KiedyNadplata.CO_MIESIAC_W_WYBRANYM_DNIU
+                  ? <>
+                    <DateInput
+                      styles={{ marginBottom: 0 }}
+                      value={nadplata.dataRatyStart || ""}
+                      onChange={(value) => {
+                        setNadplaty(prev => {
+                          const newNadplaty = [...prev];
+                          newNadplaty[index].dataRatyStart = value;
+                          return newNadplaty;
+                        })
+                      }}
+                      label={nadplata.kiedyNadplata === KiedyNadplata.W_WYBRANYM_DNIU ? "Data nadpłaty" : "Data pierwszej nadpłaty"} />
 
-              <NumberInput
-                styles={{ marginBottom: 0 }}
-                value={nadplata.numerRatyKoniec}
-                onChange={(value) => {
-                  setNadplaty(prev => {
-                    const newNadplaty = [...prev];
-                    newNadplaty[index].numerRatyKoniec = value;
-                    return newNadplaty;
-                  })
-                }
-                }
-                label={nadplata.czyJednorazowa ? null : "Do Kiedy"}
-                disabled={nadplata.czyJednorazowa} />
+                    <DateInput
+                      styles={{ marginBottom: 0 }}
+                      value={nadplata.dataRatyKoniec || ""}
+                      onChange={(value) => {
+                        setNadplaty(prev => {
+                          const newNadplaty = [...prev];
+                          newNadplaty[index].dataRatyKoniec = value;
+                          return newNadplaty;
+                        })
+                      }}
+                      label={nadplata.kiedyNadplata === KiedyNadplata.W_WYBRANYM_DNIU ? undefined : "Data ostatniej nadpłaty"}
+                      disabled={nadplata.kiedyNadplata === KiedyNadplata.W_WYBRANYM_DNIU} />
+                  </> : (
+                    <>
+                      <NumberInput
+                        styles={{ marginBottom: 0 }}
+                        value={nadplata.numerRatyStart}
+                        onChange={(value) => {
+                          setNadplaty(prev => {
+                            const newNadplaty = [...prev];
+                            newNadplaty[index].numerRatyStart = value;
+                            return newNadplaty;
+                          })
+                        }}
+                        label={nadplata.kiedyNadplata === KiedyNadplata.W_DNIU_RATY ? "Numer raty" : "Od której raty"} />
+
+                      <NumberInput
+                        styles={{ marginBottom: 0 }}
+                        value={nadplata.numerRatyKoniec}
+                        onChange={(value) => {
+                          setNadplaty(prev => {
+                            const newNadplaty = [...prev];
+                            newNadplaty[index].numerRatyKoniec = value;
+                            return newNadplaty;
+                          })
+                        }
+                        }
+                        label={nadplata.kiedyNadplata === KiedyNadplata.W_DNIU_RATY ? null : "Do której raty"}
+                        disabled={nadplata.kiedyNadplata === KiedyNadplata.W_DNIU_RATY} />
+                    </>
+                  )
+              }
+
 
               <div style={{ display: "flex", flexDirection: "row", width: "calc(100% - 16px)" }}>
                 <button
@@ -201,14 +304,16 @@ function App() {
                       const newNadplaty = [...prev];
                       newNadplaty.push({
                         kwota: nadplata.kwota,
-                        czyJednorazowa: nadplata.czyJednorazowa,
+                        kiedyNadplata: nadplata.kiedyNadplata,
                         czyWyrownacDoKwoty: nadplata.czyWyrownacDoKwoty,
-                        numerRatyStart: nadplata.numerRatyStart + 1,
-                        numerRatyKoniec: nadplata.numerRatyKoniec ? nadplata.numerRatyKoniec + 1 : undefined
+                        numerRatyStart: nadplata.numerRatyStart ? nadplata.numerRatyStart + 1 : undefined,
+                        numerRatyKoniec: nadplata.numerRatyKoniec ? nadplata.numerRatyKoniec + 1 : undefined,
+                        dataRatyStart: nadplata.dataRatyStart ? dateToString(addMonths(new Date(nadplata.dataRatyStart), 1)) : undefined,
+                        dataRatyKoniec: nadplata.dataRatyKoniec ? dateToString(addMonths(new Date(nadplata.dataRatyKoniec), 1)) : undefined
                       });
                       return newNadplaty;
                     })
-                   }}>
+                  }}>
                   Kopiuj
                 </button>
               </div>
@@ -220,8 +325,8 @@ function App() {
           <button onClick={() => {
             setNadplaty([...nadplaty, {
               kwota: 1000,
-              czyJednorazowa: true,
-              numerRatyStart: nadplaty[nadplaty.length - 1]?.numerRatyStart + 1 || 1
+              kiedyNadplata: KiedyNadplata.W_DNIU_RATY,
+              numerRatyStart: (nadplaty[nadplaty.length - 1]?.numerRatyStart ?? 0) + 1
             }])
           }} style={{ backgroundColor: "rgb(75,175,80)", color: "white" }}>Dodaj nadplate</button>
         </div>
@@ -236,36 +341,38 @@ function App() {
         </div>
 
         <div className="section-body">
-            <table>
-              <thead> 
-                <tr>
-                  <th>Rok</th>
-                  <th>Numer raty</th>
-                  <th>Kapital do spłaty</th>
-                  <th>Rata</th>
-                  <th>Kapitał</th>
-                  <th>Odsetki</th>
-                  <th>Koszt skumulowany</th>
-                  <th>Nadpłaty</th>
+          <table>
+            <thead>
+              <tr>
+                {/* <th>Rok</th> */}
+                <th style={{ textAlign: "center", padding: "0.35rem" }}>Numer raty</th>
+                <th style={{ textAlign: "left", padding: "0.35rem" }}>Data</th>
+                <th>Kapital do spłaty</th>
+                <th>Rata</th>
+                <th>Kapitał</th>
+                <th>Odsetki</th>
+                <th>Koszt skumulowany</th>
+                <th>Nadpłaty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {raty.map((rata, index) => (
+                <tr key={`rata-${index}`} style={{ backgroundColor: rata.czyToNadplata ? "rgb(226, 241, 223)" : "white" }}>
+                  {/* <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td> */}
+                  <td style={{ textAlign: "center", padding: "0.35rem" }}>{rata.numerRaty}</td>
+                  <td style={{ textAlign: "left", padding: "0.35rem" }}>{rata.data}</td>
+                  <td>{roundToTwo(rata.kapital)} zł</td>
+                  <td><b>{roundToTwo(rata.kwotaCalkowita)} zł</b></td>
+                  <td>{roundToTwo(rata.kwotaKapitalu)} zł</td>
+                  <td>{roundToTwo(rata.kwotaOdsetek)} zł</td>
+                  <td>{roundToTwo(rata.laczneKoszty)} zł</td>
+                  <td>
+                    {roundToTwo(rata.nadplaty?.reduce((a, b) => a + b.kwota, 0))} zł {rata.nadplaty?.length && rata.nadplaty?.length > 1 ? `(${rata.nadplaty?.length})` : null}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {raty.map((rata, index) => (
-                  <tr key={`rata-${index}`}>
-                    <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td>
-                    <td>{rata.numerRaty}</td>
-                    <td>{roundToTwo(rata.kapital)} zł</td>
-                    <td><b>{roundToTwo(rata.kwotaCalkowita)} zł</b></td>
-                    <td>{roundToTwo(rata.kwotaKapitalu)} zł</td>
-                    <td>{roundToTwo(rata.kwotaOdsetek)} zł</td>
-                    <td>{roundToTwo(rata.laczneKoszty)} zł</td>
-                    <td>
-                      {roundToTwo(rata.nadplaty?.reduce((a, b) => a + b.kwota, 0))} zł {rata.nadplaty?.length && rata.nadplaty?.length > 1 ? `(${rata.nadplaty?.length})` : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 

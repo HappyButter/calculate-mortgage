@@ -1,6 +1,18 @@
 import { CSSProperties, useState } from "react";
 
-const NumberInput = ({ value, onChange, label, required, disabled, errorMessage, inputAdornment, isInteger, styles }: { value: number | undefined; onChange: (value: number) => void; label?: string | null; required?: boolean; disabled?: boolean; errorMessage?: string, inputAdornment?: string, isInteger?: boolean, styles?: CSSProperties }) => {
+type NumberInputProps = {
+    value: number | undefined;
+    onChange: (value: number) => void;
+    label?: string | null;
+    required?: boolean;
+    disabled?: boolean;
+    errorMessage?: string;
+    inputAdornment?: string;
+    isInteger?: boolean;
+    styles?: CSSProperties;
+};
+
+const NumberInput = ({ value, onChange, label, required, disabled, errorMessage, inputAdornment, isInteger, styles }: NumberInputProps) => {
     const [localValue, setLocalValue] = useState<string>(value?.toString() ?? "");
 
     // should apply on focus out or valid float input
