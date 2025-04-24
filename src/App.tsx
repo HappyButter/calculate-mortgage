@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from "react"
 import { useQueryState, parseAsFloat, parseAsInteger, parseAsBoolean, parseAsString, createParser } from 'nuqs'
+import { v4 as uuidv4 } from 'uuid';
+import { addMonths } from "date-fns";
 
 import LoadDialog from "./components/LoadDialog";
 import SaveDialog from "./components/SaveDialog";
@@ -8,7 +10,6 @@ import { dateToString, obliczRatyMalejace2, obliczRatyStale, roundToTwo } from "
 import useScreen from "./useScreen";
 import NumberInput from "./components/NumberInput";
 import DateInput from "./components/DateInput";
-import { addMonths } from "date-fns";
 
 const parseAsArrayOfNadplata = createParser<Nadplata[]>({
   parse(query) {
@@ -26,6 +27,10 @@ const parseAsArrayOfNadplata = createParser<Nadplata[]>({
   },
 
   serialize(state) {
+    if (!state || state.length === 0) {
+      return '';
+    }
+
     return encodeURI(JSON.stringify(state));
   }
 
@@ -74,10 +79,15 @@ function App() {
     if (data) {
       const parsedData = JSON.parse(data);
 
+      const nadplatyWithId = parsedData?.nadplaty?.map((nadplata: Nadplata) => ({
+        ...nadplata,
+        id: nadplata.id ?? uuidv4()
+      }));
+
       setKapital(prev => parsedData?.kapital ?? prev);
       setOprocentowanie(prev => parsedData?.oprocentowanie ?? prev);
-      setIloscRat(prev => parsedData?.iloscRat ?? prev);
-      setNadplaty(prev => parsedData?.nadplaty ?? prev);
+      setIloscRat(prev => parsedData ?.iloscRat ?? prev);
+      setNadplaty(prev => nadplatyWithId ?? prev);
       setCzyRataMalejaca(parsedData?.czyRataMalejaca ?? true);
       setDataPierwszejRaty(parsedData?.dataPierwszejRaty ?? new Date().toISOString().split('T')[0]);
 
@@ -142,7 +152,7 @@ function App() {
 
         <div className="section-body" style={{ display: "flex", flexDirection: "column", width: "100%" }} >
           {nadplaty.map((nadplata, index) => (
-            <div key={`nadplata-${index}`} className="nadplata">
+            <div key={`nadplata-${nadplata.id ?? index}`} className="nadplata">
 
               <div style={{ alignSelf: "flex-end", flex: 1, display: "flex", flexDirection: "column" }}>
                 <label htmlFor="czyWyrownacDoKwoty">Typ nadpłaty</label>
@@ -208,24 +218,6 @@ function App() {
                   <option value={KiedyNadplata.CO_MIESIAC_W_WYBRANYM_DNIU}>Co miesiąc w wybranym dniu</option>
                 </select>
               </div>
-
-
-              {/* <div style={{ alignSelf: "flex-end", flex: 1, flexDirection: "column", display: "flex" }}>
-                <label htmlFor="czyJednorazowa">Kiedy</label>
-                <select id="czyJednorazowa" value={nadplata.data ? 2 : nadplata.czyJednorazowa ? 1 : 0} onChange={(e) =>
-                  setNadplaty(prev => {
-                    const newNadplaty = [...prev];
-                    newNadplaty[index].data = e.target.value === '2' ? new Date().toISOString().split('T')[0] : undefined;
-                    newNadplaty[index].czyJednorazowa = e.target.value === '1';
-                    newNadplaty[index].numerRatyKoniec = e.target.value === '1' ? undefined : newNadplaty[index].numerRatyStart + 1;
-                    return newNadplaty;
-                  })
-                }>
-                  <option value={2}>W wybranym dniu</option>
-                  <option value={1}>W dniu raty</option>
-                  <option value={0}>Co miesiąc</option>
-                </select>
-              </div> */}
 
               {
                 nadplata.kiedyNadplata === KiedyNadplata.W_WYBRANYM_DNIU || nadplata.kiedyNadplata === KiedyNadplata.CO_MIESIAC_W_WYBRANYM_DNIU
@@ -303,6 +295,7 @@ function App() {
                     setNadplaty(prev => {
                       const newNadplaty = [...prev];
                       newNadplaty.push({
+                        id: uuidv4(),
                         kwota: nadplata.kwota,
                         kiedyNadplata: nadplata.kiedyNadplata,
                         czyWyrownacDoKwoty: nadplata.czyWyrownacDoKwoty,
@@ -324,6 +317,7 @@ function App() {
         <div style={{ justifyContent: "left", display: "flex", padding: "8px 16px" }}>
           <button onClick={() => {
             setNadplaty([...nadplaty, {
+              id: uuidv4(),
               kwota: 1000,
               kiedyNadplata: KiedyNadplata.W_DNIU_RATY,
               numerRatyStart: (nadplaty[nadplaty.length - 1]?.numerRatyStart ?? 0) + 1

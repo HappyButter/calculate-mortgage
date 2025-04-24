@@ -8,6 +8,7 @@ export const KiedyNadplata =
 
 
 export type Nadplata = {
+    id: string;
     kwota: number;
     kiedyNadplata: KiedyNadplataType;
     czyWyrownacDoKwoty?: boolean;
