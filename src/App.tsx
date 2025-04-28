@@ -86,7 +86,7 @@ function App() {
 
       setKapital(prev => parsedData?.kapital ?? prev);
       setOprocentowanie(prev => parsedData?.oprocentowanie ?? prev);
-      setIloscRat(prev => parsedData ?.iloscRat ?? prev);
+      setIloscRat(prev => parsedData?.iloscRat ?? prev);
       setNadplaty(prev => nadplatyWithId ?? prev);
       setCzyRataMalejaca(parsedData?.czyRataMalejaca ?? true);
       setDataPierwszejRaty(parsedData?.dataPierwszejRaty ?? new Date().toISOString().split('T')[0]);
@@ -200,7 +200,7 @@ function App() {
                       const numerRatyStart = index === 0 ? 1 : ((newNadplaty[index - 1].numerRatyStart ?? 0) + 1);
                       newNadplaty[index].numerRatyStart = numerRatyStart;
                       newNadplaty[index].numerRatyKoniec = newValue === KiedyNadplata.W_DNIU_RATY ? undefined : (numerRatyStart + 1);
-                      
+
                     } else if (newValue === KiedyNadplata.W_WYBRANYM_DNIU || newValue === KiedyNadplata.CO_MIESIAC_W_WYBRANYM_DNIU) {
                       newNadplaty[index].numerRatyStart = undefined;
                       newNadplaty[index].numerRatyKoniec = undefined;
@@ -351,7 +351,10 @@ function App() {
             </thead>
             <tbody>
               {raty.map((rata, index) => (
-                <tr key={`rata-${index}`} style={{ backgroundColor: rata.czyToNadplata ? "rgb(226, 241, 223)" : "white" }}>
+                <tr key={`rata-${index}`} style={{
+                  backgroundColor: rata.czyToNadplata ? "rgb(226, 241, 223)" : "white",
+                  color: rata.numerRaty % 12 === 0 ? "#646cff" : "black",
+                }}>
                   {/* <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td> */}
                   <td style={{ textAlign: "center", padding: "0.35rem" }}>{rata.numerRaty}</td>
                   <td style={{ textAlign: "left", padding: "0.35rem" }}>{rata.data}</td>

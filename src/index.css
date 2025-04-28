@@ -152,17 +152,12 @@ td {
 }
 
 tr {
-  /* padding-block: 1em; */
   transition: background-color 0.25s;
   border-bottom: 1px solid #e0e0e0;
 }
 
 tr:hover {
   background-color: #efefef;
-}
-
-tr:nth-child(12n) {
-  color: #646cff;
 }
 
 .phone-rotation-wrapper {
@@ -176,7 +171,6 @@ tr:nth-child(12n) {
   overflow: hidden;
   margin: 0;
 }
-
 
 .phone {
   height: 50px;
