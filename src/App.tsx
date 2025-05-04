@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react"
 import { useQueryState, parseAsFloat, parseAsInteger, parseAsBoolean, parseAsString } from 'nuqs'
 import { v4 as uuidv4 } from 'uuid';
-import { addMonths } from "date-fns";
+import { addMonths, getMonth } from "date-fns";
 
 import LoadDialog from "./components/LoadDialog";
 import SaveDialog from "./components/SaveDialog";
@@ -328,7 +328,7 @@ function App() {
               {raty.map((rata, index) => (
                 <tr key={`rata-${index}`} style={{
                   backgroundColor: rata.czyToNadplata ? "rgb(226, 241, 223)" : "white",
-                  color: rata.numerRaty % 12 === 0 ? "#646cff" : "black",
+                  color: (rata.data ? getMonth(new Date(rata.data)) === 0 : rata.numerRaty % 12 === 0) ? "#646cff" : "black",
                 }}>
                   {/* <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td> */}
                   <td style={{ textAlign: "center", padding: "0.35rem" }}>{rata.numerRaty}</td>
