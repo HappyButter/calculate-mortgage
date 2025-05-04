@@ -1,40 +1,15 @@
 import { useCallback, useMemo, useState } from "react"
-import { useQueryState, parseAsFloat, parseAsInteger, parseAsBoolean, parseAsString, createParser } from 'nuqs'
+import { useQueryState, parseAsFloat, parseAsInteger, parseAsBoolean, parseAsString } from 'nuqs'
 import { v4 as uuidv4 } from 'uuid';
 import { addMonths } from "date-fns";
 
 import LoadDialog from "./components/LoadDialog";
 import SaveDialog from "./components/SaveDialog";
 import { Rata, Nadplata, KiedyNadplata, KiedyNadplataType } from "./types";
-import { dateToString, obliczRatyMalejace2, obliczRatyStale, roundToTwo } from "./utils";
+import { dateToString, obliczRatyMalejace2, obliczRatyStale, parseAsArrayOfNadplata, roundToTwo } from "./utils";
 import useScreen from "./useScreen";
 import NumberInput from "./components/NumberInput";
 import DateInput from "./components/DateInput";
-
-const parseAsArrayOfNadplata = createParser<Nadplata[]>({
-  parse(query) {
-    const value = decodeURI(query);
-    if (!value) {
-      return [];
-    }
-
-    const parsedValue = JSON.parse(value);
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return parsedValue as Nadplata[];
-  },
-
-  serialize(state) {
-    if (!state || state.length === 0) {
-      return '';
-    }
-
-    return encodeURI(JSON.stringify(state));
-  }
-
-})
 
 
 function App() {

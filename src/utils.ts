@@ -1,5 +1,6 @@
 import { addMonths, differenceInCalendarDays, getDaysInYear, getOverlappingDaysInIntervals, isWithinInterval, subDays, subMonths } from "date-fns";
-import { Rata, Zmiany, KiedyNadplata, Nadplata } from "./types";
+import { Rata, Zmiany, KiedyNadplata, Nadplata, kiedyNadplatyArray, KiedyNadplataType } from "./types";
+import { createParser } from 'nuqs'
 
 export function obliczRatyMalejace(aktualnaRata: Rata, zmiany: Zmiany): Rata[] {
     const listaRat: Rata[] = [];
@@ -67,7 +68,7 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
         // nadplaty pomiędzy [dataMiesiacPrzedRata i dataRaty)
         const nadplatyPrzedRata = getNadplatyPrzedRata(zmiany.nadplaty, dataMiesiacPrzedRata, dataRaty);
 
-        
+
         if (nadplatyPrzedRata.length > 0) {
             let rataNadplaty = { ...nowaRata };
             let nadplataIdx = 0;
@@ -321,4 +322,109 @@ function getIntervalBetweenDatesEveryMonth({ start, end }: { start: Date, end: D
     }
 
     return months;
+}
+
+export const parseAsArrayOfNadplata = createParser<Nadplata[]>({
+    parse(query) {
+        const value = decode(query);
+        if (!value) {
+            return [];
+        }
+
+        const parsedValue = JSON.parse(value);
+        if (!Array.isArray(parsedValue)) {
+            return [];
+        }
+
+        const depurifiedState = parsedValue.map(item => {
+            return Object.fromEntries(
+                Object.entries(item).map(([key, value]) => {
+                    if (key == 'k') {
+                        return ['kwota', value]
+                    } 
+                    if (key == 'kn') {
+                        const index = parseInt(value as string)
+                        return ['kiedyNadplata', kiedyNadplatyArray[index]]
+                    } 
+                    if (key == 'cwdk') {
+                        return ['czyWyrownacDoKwoty', value]
+                    }
+                    if (key == 'd') {
+                        return ['data', value]
+                    } 
+                    if (key == 'drs') {
+                        return ['dataRatyStart', value]
+                    } 
+                    if (key == 'drk') {
+                        return ['dataRatyKoniec', value]
+                    } 
+                    if (key == 'nrs') {
+                        return ['numerRatyStart', value]
+                    }                    
+                    if (key == 'nrk') {
+                        return ['numerRatyKoniec', value]
+                    } 
+                        
+                    return [key, value];
+                })
+            )
+        })
+
+        return depurifiedState as Nadplata[];
+    },
+
+    serialize(state) {
+        if (!state || state.length === 0) {
+            return '';
+        }
+
+        const purifiedState = state.map(item => {
+            return Object.fromEntries(
+                Object.entries(item).map(([key, value]) => {
+                    if (key == 'kwota') {
+                        return ['k', value]
+                    } 
+                    if (key == 'kiedyNadplata') {
+                        const index = kiedyNadplatyArray.indexOf(value as KiedyNadplataType)
+                        return ['kn', index.toString()]
+                    } 
+                    if (key == 'czyWyrownacDoKwoty') {
+                        return ['cwdk', value]
+                    }
+                    if (key == 'data') {
+                        return ['d', value]
+                    } 
+                    if (key == 'dataRatyStart') {
+                        return ['drs', value]
+                    } 
+                    if (key == 'dataRatyKoniec') {
+                        return ['drk', value]
+                    } 
+                    if (key == 'numerRatyStart') {
+                        return ['nrs', value]
+                    }                    
+                    if (key == 'numerRatyKoniec') {
+                        return ['nrk', value]
+                    } 
+                        
+                    return [key, value];
+
+                })
+            )
+        })
+
+        return encode(JSON.stringify(purifiedState));
+    }
+
+})
+
+function decode(str: string): string {
+    return atob(str.replace(/\-/g, "+").replace(/_/g, "/"));
+}
+
+function encode(str: string): string {
+    return btoa(str)
+        .replace(/\//g, "_")
+        .replace(/\+/g, "-")
+        .replace(/=+$/, "");
 }

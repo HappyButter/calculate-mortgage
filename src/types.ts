@@ -1,4 +1,4 @@
-const kiedyNadplatyArray = ['W_WYBRANYM_DNIU', 'W_DNIU_RATY', 'CO_MIESIAC_W_DNIU_RATY', 'CO_MIESIAC_W_WYBRANYM_DNIU'] as const;
+export const kiedyNadplatyArray = ['W_WYBRANYM_DNIU', 'W_DNIU_RATY', 'CO_MIESIAC_W_DNIU_RATY', 'CO_MIESIAC_W_WYBRANYM_DNIU'] as const;
 export type KiedyNadplataType = typeof kiedyNadplatyArray[number];
 export const KiedyNadplata = 
   kiedyNadplatyArray.reduce((acc, item) => {
