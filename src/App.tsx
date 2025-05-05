@@ -6,7 +6,7 @@ import { addMonths, getMonth } from "date-fns";
 import LoadDialog from "./components/LoadDialog";
 import SaveDialog from "./components/SaveDialog";
 import { Rata, Nadplata, KiedyNadplata, KiedyNadplataType } from "./types";
-import { dateToString, obliczRatyMalejace2, obliczRatyStale, parseAsArrayOfNadplata, roundToTwo } from "./utils";
+import { beautifyFloat, dateToString, obliczRatyMalejace2, obliczRatyStale, parseAsArrayOfNadplata, roundToTwo } from "./utils";
 import useScreen from "./useScreen";
 import NumberInput from "./components/NumberInput";
 import DateInput from "./components/DateInput";
@@ -328,10 +328,14 @@ function App() {
               {raty.map((rata, index) => (
                 <tr key={`rata-${index}`} style={{
                   backgroundColor: rata.czyToNadplata ? "rgb(226, 241, 223)" : "white",
-                  color: (rata.data ? getMonth(new Date(rata.data)) === 0 : rata.numerRaty % 12 === 0) ? "#646cff" : "black",
+                  color:
+                    (rata.data
+                      ? getMonth(new Date(rata.data)) === 0 && Number.isInteger(rata.numerRaty)
+                      : rata.numerRaty % 12 === 0)
+                      ? "#646cff" : "black",
                 }}>
                   {/* <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td> */}
-                  <td style={{ textAlign: "center", padding: "0.35rem" }}>{rata.numerRaty}</td>
+                  <td style={{ textAlign: "center", padding: "0.35rem" }}>{beautifyFloat(rata.numerRaty)}</td>
                   <td style={{ textAlign: "left", padding: "0.35rem" }}>{rata.data}</td>
                   <td>{roundToTwo(rata.kapital)} zł</td>
                   <td><b>{roundToTwo(rata.kwotaCalkowita)} zł</b></td>

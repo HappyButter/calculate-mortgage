@@ -100,7 +100,7 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
                         rataNadplaty.data = dateToString(nadplataData);
                         rataNadplaty.czyToNadplata = true;
                         rataNadplaty.nadplaty = [{ ...nadplata, kwota: rataNadplaty.kwotaCalkowita }];
-                        rataNadplaty.numerRaty = nowaRata.numerRaty - 1 + 0.1;
+                        rataNadplaty.numerRaty = nowaRata.numerRaty - 1 + ((nadplataIdx + 1) * 0.1);
 
                         listaRat.push({ ...rataNadplaty });
                     } else {
@@ -428,3 +428,14 @@ function encode(str: string): string {
         .replace(/\+/g, "-")
         .replace(/=+$/, "");
 }
+
+export function beautifyFloat(num: number) {
+    if (Number.isInteger(num)) {
+      return num;
+    }
+  
+    // Use toFixed with reasonable precision, then parse back to remove unnecessary trailing zeros
+    const fixed = num.toFixed(3); 
+    return parseFloat(fixed);
+  }
+  
