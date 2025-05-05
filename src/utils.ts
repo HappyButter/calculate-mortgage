@@ -1,4 +1,4 @@
-import { addMonths, differenceInCalendarDays, getDaysInYear, getOverlappingDaysInIntervals, isWithinInterval, subDays, subMonths } from "date-fns";
+import { addMonths, differenceInCalendarDays, getOverlappingDaysInIntervals, isWithinInterval, subDays, subMonths } from "date-fns";
 import { Rata, Zmiany, KiedyNadplata, Nadplata, kiedyNadplatyArray, KiedyNadplataType } from "./types";
 import { createParser } from 'nuqs'
 
@@ -93,9 +93,9 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
                             break kwotaNadplatyIsLowerThanZero;
                         }
 
-                        rataNadplaty.kwotaKapitalu = kwotaNadplaty;
-                        rataNadplaty.kwotaOdsetek = rataNadplaty.kapital * odsetkiDoNadplaty;
-                        rataNadplaty.kwotaCalkowita = rataNadplaty.kwotaKapitalu + rataNadplaty.kwotaOdsetek;
+                        rataNadplaty.kwotaKapitalu = roundToTwoDigits(kwotaNadplaty);
+                        rataNadplaty.kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
+                        rataNadplaty.kwotaCalkowita = roundToTwoDigits(rataNadplaty.kwotaKapitalu + rataNadplaty.kwotaOdsetek);
                         rataNadplaty.laczneKoszty += rataNadplaty.kwotaOdsetek;
                         rataNadplaty.data = dateToString(nadplataData);
                         rataNadplaty.czyToNadplata = true;
@@ -105,8 +105,8 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
                         listaRat.push({ ...rataNadplaty });
                     } else {
                         const odsetkiDoNadplaty = obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, nadplataData, rataNadplaty.oprocentowanie);
-                        const kwotaOdsetek = rataNadplaty.kapital * odsetkiDoNadplaty;
-                        const kwotaNadplaty = nadplata.kwota - kwotaOdsetek;
+                        const kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
+                        const kwotaNadplaty = roundToTwoDigits(nadplata.kwota - kwotaOdsetek);
 
                         if (roundToTwoDigits(kwotaNadplaty) < 0) {
                             break kwotaNadplatyIsLowerThanZero;
@@ -137,9 +137,9 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
             ? new Date(nadplatyPrzedRata[nadplatyPrzedRata.length - 1].data ?? "")
             : dataMiesiacPrzedRata;
 
-        nowaRata.kwotaKapitalu = nowaRata.kapital / (nowaRata.iloscRat - nowaRata.numerRaty + 1); // tricky part
-        nowaRata.kwotaOdsetek = nowaRata.kapital * obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, dataRaty, nowaRata.oprocentowanie);
-        nowaRata.kwotaCalkowita = nowaRata.kwotaKapitalu + nowaRata.kwotaOdsetek;
+        nowaRata.kwotaKapitalu = roundToTwoDigits(nowaRata.kapital / (nowaRata.iloscRat - nowaRata.numerRaty + 1)); // tricky part
+        nowaRata.kwotaOdsetek = roundToTwoDigits(nowaRata.kapital * obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, dataRaty, nowaRata.oprocentowanie));
+        nowaRata.kwotaCalkowita = roundToTwoDigits(nowaRata.kwotaKapitalu + nowaRata.kwotaOdsetek);
         nowaRata.laczneKoszty += nowaRata.kwotaOdsetek;
 
         const nadplaty = zmiany.nadplaty.filter(nadplata => {
@@ -170,7 +170,7 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
         if (nadplaty.length > 0) {
             // sum all nadplaty
             const sumaNadplat = nadplaty.reduce((a, b) => a + b.kwota, 0);
-            nowaRata.kapital -= sumaNadplat;
+            nowaRata.kapital -= roundToTwoDigits(sumaNadplat);
         }
 
         dataMiesiacPrzedRata = new Date(dataRaty);
@@ -234,7 +234,8 @@ function getNadplatyPrzedRata(nadplaty: Nadplata[], dataMiesiacPrzedRata: Date, 
 
 function obliczOdsetkiPomiedzyDatami(data1: Date, data2: Date, oprocentowanieRoczne: number): number {
     const dni = differenceInCalendarDays(data2, data1);
-    return (oprocentowanieRoczne / 100) * (dni / getDaysInYear(data2));
+    // return (oprocentowanieRoczne / 100) * (dni / getDaysInYear(data2));
+    return (oprocentowanieRoczne / 100) * (dni / 365); // somehow for PKO BP every year has 365 days 
 }
 
 export function dateToString(date: Date): string {
@@ -252,9 +253,9 @@ export function obliczRatyStale(aktualnaRata: Rata, zmiany: Zmiany): Rata[] {
     while (nowaRata.kapital > 0 && nowaRata.numerRaty <= nowaRata.iloscRat) {
         nowaRata = { ...nowaRata };
 
-        nowaRata.kwotaCalkowita = obliczAkutalnaRateStala(nowaRata.kapital, nowaRata.oprocentowanie, nowaRata.iloscRat - nowaRata.numerRaty + 1);
-        nowaRata.kwotaOdsetek = nowaRata.kapital * (nowaRata.oprocentowanie / 100) / 12;
-        nowaRata.kwotaKapitalu = nowaRata.kwotaCalkowita - nowaRata.kwotaOdsetek;
+        nowaRata.kwotaCalkowita = roundToTwoDigits(obliczAkutalnaRateStala(nowaRata.kapital, nowaRata.oprocentowanie, nowaRata.iloscRat - nowaRata.numerRaty + 1));
+        nowaRata.kwotaOdsetek = roundToTwoDigits(nowaRata.kapital * (nowaRata.oprocentowanie / 100) / 12);
+        nowaRata.kwotaKapitalu = roundToTwoDigits(nowaRata.kwotaCalkowita - nowaRata.kwotaOdsetek);
         nowaRata.laczneKoszty += nowaRata.kwotaOdsetek;
 
         const nadplaty = zmiany.nadplaty.filter(nadplata => {
