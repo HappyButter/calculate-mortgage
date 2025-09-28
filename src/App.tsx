@@ -10,6 +10,7 @@ import { beautifyFloat, dateToString, obliczRatyMalejace2, obliczRatyStale, pars
 import useScreen from "./useScreen";
 import NumberInput from "./components/NumberInput";
 import DateInput from "./components/DateInput";
+import Section from "./components/Section";
 
 
 function App() {
@@ -93,11 +94,7 @@ function App() {
 
       <br /><br />
 
-      <section>
-        <div className="section-header">
-          <h3>Podstawowe dane kredytowe</h3>
-        </div>
-
+      <Section title="Podstawowe dane kredytowe">
         <div className="section-body">
           <NumberInput value={kapital} onChange={setKapital} label="Kwota kredytu" inputAdornment="zł" key={`kapital_${key}`} />
           <NumberInput value={oprocentowanie} onChange={setOprocentowanie} label="Oprocentowanie" inputAdornment="%" key={`oprocentowanie_${key}`} />
@@ -116,15 +113,11 @@ function App() {
           </div>
 
         </div>
-      </section>
+      </Section>
 
       <br />
 
-      <section>
-        <div className="section-header">
-          <h3>Nadpłaty</h3>
-        </div>
-
+      <Section title="Nadpłaty">
         <div className="section-body" style={{ display: "flex", flexDirection: "column", width: "100%" }} >
           {nadplaty.map((nadplata, index) => (
             <div key={`nadplata-${nadplata.id ?? index}`} className="nadplata">
@@ -300,15 +293,11 @@ function App() {
           }} style={{ backgroundColor: "rgb(75,175,80)", color: "white" }}>Dodaj nadplate</button>
         </div>
 
-      </section>
+      </Section>
 
       <br />
 
-      <section>
-        <div className="section-header">
-          <h3>Harmonogram spłaty kredytu</h3>
-        </div>
-
+      <Section title="Harmonogram spłaty kredytu">
         <div className="section-body">
           <table>
             <thead>
@@ -350,7 +339,7 @@ function App() {
             </tbody>
           </table>
         </div>
-      </section>
+      </Section>
 
       <br />
 
