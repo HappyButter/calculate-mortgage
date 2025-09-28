@@ -12,9 +12,10 @@ const Section: React.FC<{ title: string, children: React.ReactNode }> = ({ title
     };
 
     useEffect(() => {
-        expandIconRef.current?.classList.toggle('expand');
-        sectionHeaderRef.current?.classList.toggle('collapsed');
         if (contentRef.current) {
+            expandIconRef.current?.classList.toggle('expand');
+            sectionHeaderRef.current?.classList.toggle('collapsed');
+
             contentRef.current.style.maxHeight = isHidden ? '0px' : contentRef.current?.scrollHeight + "px";
             contentRef.current.ariaHidden = isHidden ? "true" : "false";
         }
