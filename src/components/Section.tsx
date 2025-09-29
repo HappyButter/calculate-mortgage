@@ -1,26 +1,18 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import AnimateHeight, { Height } from 'react-animate-height';
 
-const Section: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => {
-    const [isHidden, setIsHidden] = useState(false);
+const Section: React.FC<{ title: string, children: React.ReactNode, duration?: number }> = ({ title, children, duration = 300 }) => {
+    const [height, setHeight] = useState<Height>('auto');
 
     const expandIconRef = useRef<HTMLElement | null>(null);
     const sectionHeaderRef = useRef<HTMLDivElement | null>(null);
-    const contentRef = useRef<HTMLDivElement | null>(null);
 
     const toggleVisibility = () => {
-        setIsHidden(prev => !prev);
-    };
+        setHeight(prev => prev === 'auto' ? 0 : 'auto');
 
-    useEffect(() => {
-        if (contentRef.current) {
-            expandIconRef.current?.classList.toggle('expand');
-            sectionHeaderRef.current?.classList.toggle('collapsed');
-
-            contentRef.current.style.maxHeight = isHidden ? '0px' : contentRef.current?.scrollHeight + "px";
-            contentRef.current.ariaHidden = isHidden ? "true" : "false";
-        }
-    }, [isHidden])
-
+        expandIconRef.current?.classList.toggle('expand');
+        sectionHeaderRef.current?.classList.toggle('collapsed');
+    }
 
     return (
         <section>
@@ -35,7 +27,13 @@ const Section: React.FC<{ title: string, children: React.ReactNode }> = ({ title
                 </span>
             </div>
 
-            <div className={'section-content'} ref={contentRef}>{children}</div>
+            <AnimateHeight
+                className={'section-content'}
+                duration={duration}
+                height={height}
+            >
+                {children}
+            </AnimateHeight>
         </section>
     );
 };

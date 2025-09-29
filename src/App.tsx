@@ -297,7 +297,7 @@ function App() {
 
       <br />
 
-      <Section title="Harmonogram spłaty kredytu">
+      <Section title="Harmonogram spłaty kredytu" duration={500}>
         <div className="section-body">
           <table>
             <thead>
