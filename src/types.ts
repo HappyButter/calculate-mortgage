@@ -5,12 +5,21 @@ export const KiedyNadplata =
     acc[item] = item;
     return acc;
   }, {} as Record<KiedyNadplataType, KiedyNadplataType>) 
+  
+export const skutekNadplatyArray = ['WSZYSTKO_W_KAPITAL', 'NAJPIERW_ODSETKI'] as const;
+export type SkutekNadplatyType = typeof skutekNadplatyArray[number];
+export const SkutekNadplaty = 
+  skutekNadplatyArray.reduce((acc, item) => {
+    acc[item] = item;
+    return acc;
+  }, {} as Record<SkutekNadplatyType, SkutekNadplatyType>) 
 
 
 export type Nadplata = {
     id: string;
     kwota: number;
     kiedyNadplata: KiedyNadplataType;
+    skutekNadplaty: SkutekNadplatyType;
     czyWyrownacDoKwoty?: boolean;
     data?: string;
     dataRatyStart?: string;

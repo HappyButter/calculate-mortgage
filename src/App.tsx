@@ -5,7 +5,7 @@ import { addMonths, getMonth } from "date-fns";
 
 import LoadDialog from "./components/LoadDialog";
 import SaveDialog from "./components/SaveDialog";
-import { Rata, Nadplata, KiedyNadplata, KiedyNadplataType } from "./types";
+import { Rata, Nadplata, KiedyNadplata, KiedyNadplataType, SkutekNadplaty, SkutekNadplatyType } from "./types";
 import { beautifyFloat, dateToString, obliczRatyMalejace2, obliczRatyStale, parseAsArrayOfNadplata, roundToTwo } from "./utils";
 import useScreen from "./useScreen";
 import NumberInput from "./components/NumberInput";
@@ -57,7 +57,8 @@ function App() {
 
       const nadplatyWithId = parsedData?.nadplaty?.map((nadplata: Nadplata) => ({
         ...nadplata,
-        id: nadplata.id ?? uuidv4()
+        id: nadplata.id ?? uuidv4(),
+        skutekNadplaty: nadplata.skutekNadplaty ?? SkutekNadplaty.NAJPIERW_ODSETKI,
       }));
 
       setKapital(prev => parsedData?.kapital ?? prev);
@@ -121,6 +122,26 @@ function App() {
         <div className="section-body" style={{ display: "flex", flexDirection: "column", width: "100%" }} >
           {nadplaty.map((nadplata, index) => (
             <div key={`nadplata-${nadplata.id ?? index}`} className="nadplata">
+
+              <div style={{ alignSelf: "flex-end", flex: 1, display: "flex", flexDirection: "column" }}>
+                <label htmlFor="skutekNadplaty">Skutek nadpłaty</label>
+                <select id="skutekNadplaty" value={nadplata.skutekNadplaty} onChange={(e) =>
+                  setNadplaty(prev => {
+                    const newNadplaty = [...prev];
+                    const newValue = e.target.value;
+
+                    if (!newValue) {
+                      return newNadplaty;
+                    }
+
+                    newNadplaty[index].skutekNadplaty = newValue as SkutekNadplatyType;
+                    return newNadplaty;
+                  })
+                }>
+                  <option value={SkutekNadplaty.NAJPIERW_ODSETKI}>Najpierw odsetki</option>
+                  <option value={SkutekNadplaty.WSZYSTKO_W_KAPITAL}>Wszystko w kapitał</option>
+                </select>
+              </div>
 
               <div style={{ alignSelf: "flex-end", flex: 1, display: "flex", flexDirection: "column" }}>
                 <label htmlFor="czyWyrownacDoKwoty">Typ nadpłaty</label>
@@ -265,6 +286,7 @@ function App() {
                       newNadplaty.push({
                         id: uuidv4(),
                         kwota: nadplata.kwota,
+                        skutekNadplaty: nadplata.skutekNadplaty,
                         kiedyNadplata: nadplata.kiedyNadplata,
                         czyWyrownacDoKwoty: nadplata.czyWyrownacDoKwoty,
                         numerRatyStart: nadplata.numerRatyStart ? nadplata.numerRatyStart + 1 : undefined,
@@ -287,6 +309,7 @@ function App() {
             setNadplaty([...nadplaty, {
               id: uuidv4(),
               kwota: 1000,
+              skutekNadplaty: SkutekNadplaty.NAJPIERW_ODSETKI,
               kiedyNadplata: KiedyNadplata.W_DNIU_RATY,
               numerRatyStart: (nadplaty[nadplaty.length - 1]?.numerRatyStart ?? 0) + 1
             }])

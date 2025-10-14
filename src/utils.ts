@@ -1,5 +1,6 @@
 import { addMonths, differenceInCalendarDays, getOverlappingDaysInIntervals, isWithinInterval, subDays, subMonths } from "date-fns";
-import { Rata, Zmiany, KiedyNadplata, Nadplata, kiedyNadplatyArray, KiedyNadplataType } from "./types";
+import { clone } from 'remeda';
+import { Rata, Zmiany, KiedyNadplata, Nadplata, kiedyNadplatyArray, KiedyNadplataType, skutekNadplatyArray, SkutekNadplatyType, SkutekNadplaty } from "./types";
 import { createParser } from 'nuqs'
 
 export function obliczRatyMalejace(aktualnaRata: Rata, zmiany: Zmiany): Rata[] {
@@ -59,23 +60,23 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
     let dataRaty = zmiany.dataPierwszejRaty ? new Date(zmiany.dataPierwszejRaty) : new Date();
     let dataMiesiacPrzedRata = subMonths(new Date(dataRaty), 1);
 
-    let nowaRata = { ...aktualnaRata };
+    let nowaRata = clone(aktualnaRata);
 
     while (nowaRata.kapital > 0 && nowaRata.numerRaty <= nowaRata.iloscRat) {
-        nowaRata = { ...nowaRata };
+        nowaRata = clone(nowaRata);
         nowaRata.data = dateToString(dataRaty);
+        nowaRata.kwotaOdsetek = 0.0;
 
         // nadplaty pomiędzy [dataMiesiacPrzedRata i dataRaty)
         const nadplatyPrzedRata = getNadplatyPrzedRata(zmiany.nadplaty, dataMiesiacPrzedRata, dataRaty);
 
-
         if (nadplatyPrzedRata.length > 0) {
-            let rataNadplaty = { ...nowaRata };
+            let rataNadplaty = clone(nowaRata);
             let nadplataIdx = 0;
 
 
             for (const nadplata of nadplatyPrzedRata) {
-                rataNadplaty = { ...rataNadplaty };
+                rataNadplaty = clone(rataNadplaty);
 
                 const nadplataData = new Date(nadplata.data ?? ""); // here the date must exist - cuz it's filtered by date
                 const dataOstatniejSplaty = nadplataIdx === 0
@@ -83,77 +84,129 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
                     : new Date(nadplatyPrzedRata[nadplataIdx - 1].data ?? "");
 
                 kwotaNadplatyIsLowerThanZero: {
-                    if (nadplata.czyWyrownacDoKwoty) {
-                        const odsetkiDoNadplaty = obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, nadplataData, rataNadplaty.oprocentowanie);
-                        const odsetkiDoRaty = obliczOdsetkiPomiedzyDatami(nadplataData, dataRaty, rataNadplaty.oprocentowanie);
-                        const z = (1 / (rataNadplaty.iloscRat - rataNadplaty.numerRaty + 1)) + odsetkiDoRaty;
-                        const kwotaNadplaty = (nadplata.kwota - (rataNadplaty.kapital * odsetkiDoNadplaty) - (rataNadplaty.kapital * z)) / (1 - z);
+                    if (nadplata.skutekNadplaty === SkutekNadplaty.NAJPIERW_ODSETKI) {
+                        if (nadplata.czyWyrownacDoKwoty) {
+                            const odsetkiDoNadplaty = obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, nadplataData, rataNadplaty.oprocentowanie);
+                            const odsetkiDoRaty = obliczOdsetkiPomiedzyDatami(nadplataData, dataRaty, rataNadplaty.oprocentowanie);
+                            const z = (1 / (rataNadplaty.iloscRat - rataNadplaty.numerRaty + 1)) + odsetkiDoRaty;
+                            const kwotaNadplaty = (nadplata.kwota - (rataNadplaty.kapital * odsetkiDoNadplaty) - (rataNadplaty.kapital * z)) / (1 - z);
 
-                        if (kwotaNadplaty < 0) {
-                            break kwotaNadplatyIsLowerThanZero;
+                            if (kwotaNadplaty < 0) {
+                                break kwotaNadplatyIsLowerThanZero;
+                            }
+
+                            rataNadplaty.kwotaKapitalu = roundToTwoDigits(kwotaNadplaty);
+                            rataNadplaty.kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
+                            rataNadplaty.kwotaCalkowita = roundToTwoDigits(rataNadplaty.kwotaKapitalu + rataNadplaty.kwotaOdsetek);
+                            rataNadplaty.laczneKoszty += rataNadplaty.kwotaOdsetek;
+                            rataNadplaty.data = dateToString(nadplataData);
+                            rataNadplaty.czyToNadplata = true;
+                            rataNadplaty.nadplaty = [{ ...nadplata, kwota: rataNadplaty.kwotaCalkowita }];
+                            rataNadplaty.numerRaty = nowaRata.numerRaty - 1 + ((nadplataIdx + 1) * 0.1);
+
+                            listaRat.push(clone(rataNadplaty));
+                        } else {
+                            const odsetkiDoNadplaty = obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, nadplataData, rataNadplaty.oprocentowanie);
+                            const kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
+                            const kwotaNadplaty = roundToTwoDigits(nadplata.kwota - kwotaOdsetek);
+
+                            if (roundToTwoDigits(kwotaNadplaty) < 0) {
+                                break kwotaNadplatyIsLowerThanZero;
+                            }
+
+                            rataNadplaty.kwotaOdsetek = kwotaOdsetek;
+                            rataNadplaty.kwotaKapitalu = kwotaNadplaty;
+                            rataNadplaty.kwotaCalkowita = nadplata.kwota;
+                            rataNadplaty.laczneKoszty += rataNadplaty.kwotaOdsetek;
+                            rataNadplaty.data = dateToString(nadplataData);
+
+                            rataNadplaty.czyToNadplata = true;
+                            rataNadplaty.nadplaty = [nadplata];
+                            rataNadplaty.numerRaty = nowaRata.numerRaty - 1 + ((nadplataIdx + 1) * 0.1);
+
+                            listaRat.push(clone(rataNadplaty));
                         }
+                        rataNadplaty.kapital -= rataNadplaty.kwotaKapitalu;
+                    } else if (nadplata.skutekNadplaty === SkutekNadplaty.WSZYSTKO_W_KAPITAL) {
+                        if (nadplata.czyWyrownacDoKwoty) {
+                            const odsetkiDoNadplaty = obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, nadplataData, rataNadplaty.oprocentowanie);
+                            const odsetkiDoRaty = obliczOdsetkiPomiedzyDatami(nadplataData, dataRaty, rataNadplaty.oprocentowanie);
+                            const z = (1 / (rataNadplaty.iloscRat - rataNadplaty.numerRaty + 1)) + odsetkiDoRaty;
+                            const kwotaNadplaty = (nadplata.kwota - (rataNadplaty.kapital * odsetkiDoNadplaty) - (rataNadplaty.kapital * z)) / (1 - z);
+                            const kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
 
-                        rataNadplaty.kwotaKapitalu = roundToTwoDigits(kwotaNadplaty);
-                        rataNadplaty.kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
-                        rataNadplaty.kwotaCalkowita = roundToTwoDigits(rataNadplaty.kwotaKapitalu + rataNadplaty.kwotaOdsetek);
-                        rataNadplaty.laczneKoszty += rataNadplaty.kwotaOdsetek;
-                        rataNadplaty.data = dateToString(nadplataData);
-                        rataNadplaty.czyToNadplata = true;
-                        rataNadplaty.nadplaty = [{ ...nadplata, kwota: rataNadplaty.kwotaCalkowita }];
-                        rataNadplaty.numerRaty = nowaRata.numerRaty - 1 + ((nadplataIdx + 1) * 0.1);
+                            if (kwotaNadplaty < 0) {
+                                break kwotaNadplatyIsLowerThanZero;
+                            }
 
-                        listaRat.push({ ...rataNadplaty });
-                    } else {
-                        const odsetkiDoNadplaty = obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, nadplataData, rataNadplaty.oprocentowanie);
-                        const kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
-                        const kwotaNadplaty = roundToTwoDigits(nadplata.kwota - kwotaOdsetek);
+                            rataNadplaty.kwotaKapitalu = roundToTwoDigits(kwotaNadplaty);
+                            rataNadplaty.kwotaOdsetek = 0.0;
+                            // rataNadplaty.kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
+                            rataNadplaty.kwotaCalkowita = roundToTwoDigits(kwotaNadplaty);
+                            // rataNadplaty.laczneKoszty += rataNadplaty.kwotaOdsetek;
+                            rataNadplaty.data = dateToString(nadplataData);
+                            rataNadplaty.czyToNadplata = true;
+                            rataNadplaty.nadplaty = [{ ...nadplata, kwota: rataNadplaty.kwotaCalkowita }];
+                            rataNadplaty.numerRaty = nowaRata.numerRaty - 1 + ((nadplataIdx + 1) * 0.1);
 
-                        if (roundToTwoDigits(kwotaNadplaty) < 0) {
-                            break kwotaNadplatyIsLowerThanZero;
+                            nowaRata.kwotaOdsetek += kwotaOdsetek;
+
+                            listaRat.push(clone(rataNadplaty));
+                        } else {
+                            const odsetkiDoNadplaty = obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, nadplataData, rataNadplaty.oprocentowanie);
+                            const kwotaOdsetek = roundToTwoDigits(rataNadplaty.kapital * odsetkiDoNadplaty);
+                            const kwotaNadplaty = roundToTwoDigits(nadplata.kwota);
+
+                            if (roundToTwoDigits(kwotaNadplaty) < 0) {
+                                break kwotaNadplatyIsLowerThanZero;
+                            }
+
+                            rataNadplaty.kwotaOdsetek = 0.0;
+                            rataNadplaty.kwotaKapitalu = kwotaNadplaty;
+                            rataNadplaty.kwotaCalkowita = nadplata.kwota;
+                            // rataNadplaty.laczneKoszty += rataNadplaty.kwotaOdsetek;
+                            rataNadplaty.data = dateToString(nadplataData);
+
+                            rataNadplaty.czyToNadplata = true;
+                            rataNadplaty.nadplaty = [nadplata];
+                            rataNadplaty.numerRaty = nowaRata.numerRaty - 1 + ((nadplataIdx + 1) * 0.1);
+
+                            nowaRata.kwotaOdsetek += kwotaOdsetek;
+
+                            listaRat.push(clone(rataNadplaty));
                         }
-
-                        rataNadplaty.kwotaOdsetek = kwotaOdsetek;
-                        rataNadplaty.kwotaKapitalu = kwotaNadplaty;
-                        rataNadplaty.kwotaCalkowita = nadplata.kwota;
-                        rataNadplaty.laczneKoszty += rataNadplaty.kwotaOdsetek;
-                        rataNadplaty.data = dateToString(nadplataData);
-
-                        rataNadplaty.czyToNadplata = true;
-                        rataNadplaty.nadplaty = [nadplata];
-                        rataNadplaty.numerRaty = nowaRata.numerRaty - 1 + ((nadplataIdx + 1) * 0.1);
-
-                        listaRat.push({ ...rataNadplaty });
+                        rataNadplaty.kapital -= rataNadplaty.kwotaKapitalu;
                     }
-                    rataNadplaty.kapital -= rataNadplaty.kwotaKapitalu;
+                    nadplataIdx++;
                 }
-                nadplataIdx++;
             }
             nowaRata.kapital = rataNadplaty.kapital;
             nowaRata.laczneKoszty = rataNadplaty.laczneKoszty;
         }
 
-        // calculate kwotaKapitalu and kwotaOdsetek
-        const dataOstatniejSplaty = nadplatyPrzedRata.length > 0
+        // calculate kwotaKapitalu and kwotaOdstek
+        const dataOstatniejSplaty = nadplatyPrzedRata.length > 0 && (listaRat[listaRat.length - 1]?.nadplaty?.length ?? -1 > 0)
             ? new Date(nadplatyPrzedRata[nadplatyPrzedRata.length - 1].data ?? "")
             : dataMiesiacPrzedRata;
 
         nowaRata.kwotaKapitalu = roundToTwoDigits(nowaRata.kapital / (nowaRata.iloscRat - nowaRata.numerRaty + 1)); // tricky part
-        nowaRata.kwotaOdsetek = roundToTwoDigits(nowaRata.kapital * obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, dataRaty, nowaRata.oprocentowanie));
+        nowaRata.kwotaOdsetek += roundToTwoDigits(nowaRata.kapital * obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, dataRaty, nowaRata.oprocentowanie));
         nowaRata.kwotaCalkowita = roundToTwoDigits(nowaRata.kwotaKapitalu + nowaRata.kwotaOdsetek);
         nowaRata.laczneKoszty += nowaRata.kwotaOdsetek;
 
-        const nadplaty = zmiany.nadplaty.filter(nadplata => {
-            if (nadplata.kiedyNadplata === KiedyNadplata.W_DNIU_RATY) {
-                return nadplata.numerRatyStart === nowaRata.numerRaty
-            }
-            if (nadplata.kiedyNadplata === KiedyNadplata.CO_MIESIAC_W_DNIU_RATY) {
-                return (nadplata.numerRatyStart ?? Infinity) <= nowaRata.numerRaty && (nadplata.numerRatyKoniec ?? 0) >= nowaRata.numerRaty
-            }
-            return false;
-        }).map(nadplata => ({ ...nadplata })); // deep copy 
+        const nadplatyWDniuRaty = clone(
+            zmiany.nadplaty.filter(nadplata => {
+                if (nadplata.kiedyNadplata === KiedyNadplata.W_DNIU_RATY) {
+                    return nadplata.numerRatyStart === nowaRata.numerRaty
+                }
+                if (nadplata.kiedyNadplata === KiedyNadplata.CO_MIESIAC_W_DNIU_RATY) {
+                    return (nadplata.numerRatyStart ?? Infinity) <= nowaRata.numerRaty && (nadplata.numerRatyKoniec ?? 0) >= nowaRata.numerRaty
+                }
+                return false;
+            }));
 
-        if (nadplaty.length > 0) {
-            const updatedNadplaty = nadplaty.map(nadplata => {
+        if (nadplatyWDniuRaty.length > 0) {
+            const updatedNadplaty = nadplatyWDniuRaty.map(nadplata => {
                 if (nadplata.czyWyrownacDoKwoty) {
                     return { ...nadplata, kwota: Math.max(0, nadplata.kwota - nowaRata.kwotaCalkowita) };
                 }
@@ -165,11 +218,11 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
             nowaRata.nadplaty = [];
         }
 
-        listaRat.push({ ...nowaRata });
+        listaRat.push(clone(nowaRata));
 
-        if (nadplaty.length > 0) {
+        if (nadplatyWDniuRaty.length > 0) {
             // sum all nadplaty
-            const sumaNadplat = nadplaty.reduce((a, b) => a + b.kwota, 0);
+            const sumaNadplat = nadplatyWDniuRaty.reduce((a, b) => a + b.kwota, 0);
             nowaRata.kapital -= roundToTwoDigits(sumaNadplat);
         }
 
@@ -342,36 +395,42 @@ export const parseAsArrayOfNadplata = createParser<Nadplata[]>({
                 Object.entries(item).map(([key, value]) => {
                     if (key == 'k') {
                         return ['kwota', value]
-                    } 
+                    }
                     if (key == 'kn') {
                         const index = parseInt(value as string)
                         return ['kiedyNadplata', kiedyNadplatyArray[index]]
-                    } 
+                    }
+                    if (key == 'sn') {
+                        const index = parseInt(value as string)
+                        return ['skutekNadplaty', skutekNadplatyArray[index]]
+                    }
                     if (key == 'cwdk') {
                         return ['czyWyrownacDoKwoty', value]
                     }
                     if (key == 'd') {
                         return ['data', value]
-                    } 
+                    }
                     if (key == 'drs') {
                         return ['dataRatyStart', value]
-                    } 
+                    }
                     if (key == 'drk') {
                         return ['dataRatyKoniec', value]
-                    } 
+                    }
                     if (key == 'nrs') {
                         return ['numerRatyStart', value]
-                    }                    
+                    }
                     if (key == 'nrk') {
                         return ['numerRatyKoniec', value]
-                    } 
-                        
+                    }
+
                     return [key, value];
                 })
             )
         })
 
-        return depurifiedState as Nadplata[];
+        const depurifiedStateWithDefaults = depurifiedState.map(item => item?.skutekNadplaty ? item : Object.assign(item, { "skutekNadplaty": SkutekNadplaty.NAJPIERW_ODSETKI }))
+
+        return depurifiedStateWithDefaults as Nadplata[];
     },
 
     serialize(state) {
@@ -384,30 +443,34 @@ export const parseAsArrayOfNadplata = createParser<Nadplata[]>({
                 Object.entries(item).map(([key, value]) => {
                     if (key == 'kwota') {
                         return ['k', value]
-                    } 
+                    }
                     if (key == 'kiedyNadplata') {
                         const index = kiedyNadplatyArray.indexOf(value as KiedyNadplataType)
                         return ['kn', index.toString()]
-                    } 
+                    }
+                    if (key == 'skutekNadplaty') {
+                        const index = skutekNadplatyArray.indexOf(value as SkutekNadplatyType)
+                        return ['sn', index.toString()]
+                    }
                     if (key == 'czyWyrownacDoKwoty') {
                         return ['cwdk', value]
                     }
                     if (key == 'data') {
                         return ['d', value]
-                    } 
+                    }
                     if (key == 'dataRatyStart') {
                         return ['drs', value]
-                    } 
+                    }
                     if (key == 'dataRatyKoniec') {
                         return ['drk', value]
-                    } 
+                    }
                     if (key == 'numerRatyStart') {
                         return ['nrs', value]
-                    }                    
+                    }
                     if (key == 'numerRatyKoniec') {
                         return ['nrk', value]
-                    } 
-                        
+                    }
+
                     return [key, value];
 
                 })
@@ -432,11 +495,10 @@ function encode(str: string): string {
 
 export function beautifyFloat(num: number) {
     if (Number.isInteger(num)) {
-      return num;
+        return num;
     }
-  
+
     // Use toFixed with reasonable precision, then parse back to remove unnecessary trailing zeros
-    const fixed = num.toFixed(3); 
+    const fixed = num.toFixed(3);
     return parseFloat(fixed);
-  }
-  
+}

@@ -46,7 +46,7 @@ const SaveDialog = ({ onClose, saveToLocalStorage }: { onClose: () => void; save
                     <div>
                         <button
                             style={isNameUsed ? {} : { backgroundColor: "rgb(75,175,80)", color: "white" }}
-                            onClick={() => {saveToLocalStorage(name); onClose()}} disabled={isNameUsed}>
+                            onClick={() => { saveToLocalStorage(name); onClose() }} disabled={isNameUsed}>
                             Zapisz do pamięci przeglądarki
                         </button>
                         <button
