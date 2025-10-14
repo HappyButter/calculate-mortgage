@@ -98,7 +98,7 @@ section .section-header {
   border-radius: 8px 8px 0 0;
   transition: border-radius .1s ease-in;
   color: #000000be
-  /* transition-delay: 0s; */
+    /* transition-delay: 0s; */
 }
 
 section .section-header.collapsed {
@@ -109,14 +109,14 @@ section .section-header.collapsed {
 
 
 section .section-content {
-  overflow: hidden;
+  overflow: visible;
   transition: max-height 1s ease;
 }
 
 section .section-body {
   display: flex;
   justify-content: space-between;
-  overflow-x: auto;
+  align-items: "flex-start";
 }
 
 section .section-body>div {
