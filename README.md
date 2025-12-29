@@ -1,21 +1,23 @@
-# Calculate Mortgage
+# <img src="./public/kk.svg" width="28" height="28"> Calculate Mortgage 
 
 Calculate Mortgage, czyli kredyt hipoteczny pod kontrolą. 
 
 ## Kalkulator stworzony z myślą o:
 - śledzeniu przebiegu spłaty kredytu, 
 - symulowaniu rónych scenariuszy spłaty,
-- dokładnego liczenia nadpłat w konkretnym dniu, cyklicznie etc.
-- łatwego dzielenia się kalkulatorem poprzez URL.
+- dokładnym liczenia nadpłat w konkretnym dniu, cyklicznie etc.
+- łatwym dzieleniu się kalkulatorem poprzez URL.
+
+
 
 ## Przykład 1 - nadpłaty
 Załóżmy że 1 dnia miesiąca dysponujesz budżetem na spłatę 4000 PLN. Twoja rata 15 dnia miesiąca wynosi 2000 PLN. Chcesz jednak zadeklarować dyspozycję nadpłaty już 1 dnia miesiąca. 
 
-Prosta nadpłata w wysokości 2000 PLN nie załatwia sprawy z dwóch powodów 
+Prosta nadpłata w wysokości 2000 PLN nie załatwia sprawy z dwóch powodów:
 1. Twoja rata zmniejszy się o odsetki, które wcześniej spłacisz razem z nadpłatą.
 2. Dodatkowo od 1 do 15 dnia odsetki będą naliczane od mniejszej kwoty kapitału.
 
-Jak więc to do cholery policzyć ???
+Jak więc do cholery to policzyć ???
 
 ### To proste! 
 
@@ -42,6 +44,8 @@ Jak więc to do cholery policzyć ???
 3. cyklicznie co miesiąc w danym dniu, 
 4. cyklicznie co miesiąc w dniu raty.
 
+
+
 ## Przykład 2 - zapis/odczyt
 Aplikacja pozawala na zapis stanu kalkulatora do przeglądarki użytkownika.
 > Twoje dane zapisują się tylko na Twoim urządzeniu!  
@@ -49,6 +53,9 @@ Aplikacja pozawala na zapis stanu kalkulatora do przeglądarki użytkownika.
 Pod tytułem strony kliknij "Zapisz konfigurację" > wpisz nazwę pod jaką chcesz zapisać aktualny stan kalkulatora > <b>Voilà!</b>
 
 Teraz gdy ponownie wejdziesz na stronę możesz odczytać zapisane dane. Pod tytułem strony kliknij "Wczytaj dane" > wybierz nazwę pod jaką zapisałeś konfigurację > <b>Voilà!</b>
+
+
+
 
 ## Przykład 3 - dzielenie się stanem kalkulatora z innymi! 
 Stan kalkulatora jest zsynchronizowany z adresem URL strony. W skrócie oznacza to że możesz przesłać link znajomemu do Twojego stanu kalkulatora. (Link ten jest dość długi, co pozwala na zapis wszystkich informacji o nadpłatach etc.)
