@@ -503,3 +503,203 @@ export function beautifyFloat(num: number) {
     const fixed = num.toFixed(3);
     return parseFloat(fixed);
 }
+
+
+/**
+ * Aggregates overpayment ("nadplata") data from an array of Rata items.
+ * Returns Chart.js-ready data grouped by year and month.
+ */
+// export function aggregateOverpaymentsByYear(raty: Rata[]) {
+//   const aggregation: Record<string, Record<string, number>> = {};
+
+//   for (const rata of raty) {
+//     if (!rata.nadplaty) continue;
+
+//     for (const nadplata of rata.nadplaty) {
+//       if (!nadplata.data) continue;
+
+//       const date = parseISO(nadplata.data);
+//       const year = format(date, "yyyy");
+//       const monthLabel = format(date, "yyyy-MM"); // e.g. "2024-03"
+
+//       if (!aggregation[year]) aggregation[year] = {};
+//       if (!aggregation[year][monthLabel]) aggregation[year][monthLabel] = 0;
+
+//       aggregation[year][monthLabel] += nadplata.kwota || 0;
+//     }
+//   }
+
+//   // Create sorted list of all months across all years
+//   const labels = Array.from(
+//     new Set(Object.values(aggregation).flatMap((months) => Object.keys(months)))
+//   ).sort((a, b) => (a > b ? 1 : -1));
+
+//   // Create datasets for each year
+//   const datasets = Object.entries(aggregation).map(([year, months]) => ({
+//     label: year,
+//     data: labels.map((label) => months[label] || 0),
+//   }));
+
+//   return { labels, datasets };
+// }
+
+// export type OverpaymentByMonth = {
+//   month: string; // "MM" (e.g., "01", "02")
+//   [year: number]: number; // dynamic year keys like 2024: 500
+// };
+
+// /**
+//  * Aggregates overpayments (nadplaty) from Rata[] grouped by year and month.
+//  * Ensures every month (01–12) exists for all years, filling missing months with 0.
+//  * Returns data suitable for multi-line Recharts LineChart.
+//  */
+// export function aggregateOverpaymentsForChart(raty: Rata[]): OverpaymentByMonth[] {
+//   const aggregation = new Map<number, Map<string, number>>(); // year -> (month -> sum)
+
+//   for (const rata of raty) {
+//     if (!rata.nadplaty?.length) continue;
+
+//     for (const nadplata of rata.nadplaty) {
+//       if (!nadplata.data || !nadplata.kwota) continue;
+
+//       const date = parseISO(nadplata.data);
+//       const year = Number(format(date, "yyyy"));
+//       const monthKey = format(date, "MM"); // just month (01–12)
+
+//       if (!aggregation.has(year)) aggregation.set(year, new Map<string, number>());
+//       const yearMap = aggregation.get(year)!;
+//       yearMap.set(monthKey, (yearMap.get(monthKey) || 0) + nadplata.kwota);
+//     }
+//   }
+
+//   // Get all distinct years
+//   const allYears = Array.from(aggregation.keys()).sort();
+
+//   // Create a structure for each month (01–12)
+//   const months = Array.from({ length: 12 }, (_, i) => format(new Date(2020, i), "MM")); // ["01", "02", ...]
+
+//   // Build final chart data
+//   const result: OverpaymentByMonth[] = months.map((month) => {
+//     const entry: OverpaymentByMonth = { month };
+//     for (const year of allYears) {
+//       const yearMap = aggregation.get(year);
+//       entry[year] = yearMap?.get(month) || 0;
+//     }
+//     return entry;
+//   });
+
+//   return result;
+// }
+
+
+export type InstalmentByMonth = {
+    month: string; // "MM" (e.g. "01", "02")
+    [year: number]: number; // dynamically generated year fields
+};
+
+/**
+ * Aggregates instalment capital ("kwotaKapitalu") by year and month from Rata[].
+ * Missing months are filled with zeros so charts stay continuous.
+ * Output is formatted for multi-line Recharts LineChart.
+ */
+export function aggregateOverpaymentsForChart(raty: Rata[]): InstalmentByMonth[] {
+    const aggregation = new Map<number, Map<string, number>>(); // year -> (month -> totalCapital)
+
+    for (const rata of raty) {
+        if (!rata.data || typeof rata.kwotaKapitalu !== "number") continue;
+        if (!rata.nadplaty?.length) continue;
+
+        const date = parseISO(rata.data);
+        const year = Number(format(date, "yyyy"));
+        const monthKey = format(date, "MM");
+
+        if (!aggregation.has(year)) aggregation.set(year, new Map<string, number>());
+        const yearMap = aggregation.get(year)!;
+        yearMap.set(monthKey, (yearMap.get(monthKey) || 0) + rata.kwotaKapitalu);
+    }
+
+    // Get all distinct years (sorted)
+    const allYears = Array.from(aggregation.keys()).sort();
+
+    // Always include all 12 months (01–12)
+    const months = Array.from({ length: 12 }, (_, i) => format(new Date(2020, i), "MM"));
+
+    // Build chart data with zero-filled months
+    const result: InstalmentByMonth[] = months.map((month) => {
+        const entry: InstalmentByMonth = { month };
+        for (const year of allYears) {
+            const yearMap = aggregation.get(year);
+            entry[year] = yearMap?.get(month) || 0;
+        }
+        return entry;
+    });
+
+    return result;
+}
+
+export type BarChartRata = {
+    date: string;             // e.g. "2024-01"
+    kwotaKapitalu: number;    // capital part
+    kwotaOdsetek: number;     // interest part
+    isPast: boolean;          // true if before or equal to current month
+};
+
+/**
+ * Converts Rata[] into a format suitable for stacked Recharts BarChart.
+ * Adds an "isPast" flag for drawing a separator line.
+ */
+export function prepareRataBarChartData(raty: Rata[]): BarChartRata[] {
+    const now = new Date();
+
+    const data = raty
+        .filter((r) => r.data && typeof r.kwotaKapitalu === "number" && typeof r.kwotaOdsetek === "number")
+        .sort((a, b) => parseISO(a.data!).getTime() - parseISO(b.data!).getTime())
+        .map((r) => {
+            const date = parseISO(r.data!);
+            const isPast = isBefore(date, now) || isSameMonth(date, now);
+            return {
+                date: format(date, "yyyy-MM"),
+                kwotaKapitalu: r.kwotaKapitalu,
+                kwotaOdsetek: r.kwotaOdsetek,
+                isPast,
+            };
+        });
+
+    return data;
+}
+
+
+export type BurndownPoint = {
+    date: string;           // YYYY-MM
+    remainingCapital: number;
+    isPast: boolean;
+};
+
+/**
+ * Builds a burndown dataset from an array of Rata objects.
+ * Assumes all Rata items belong to the same loan.
+ */
+export function prepareBurndownData(raty: Rata[]): BurndownPoint[] {
+    if (raty.length === 0) return [];
+
+    const sorted = [...raty].sort(
+        (a, b) => parseISO(a.data!).getTime() - parseISO(b.data!).getTime()
+    );
+
+    const totalCapital = sorted[0].kapital; // initial loan amount
+    let cumulativePaid = 0;
+    const now = new Date();
+
+    return sorted.map((rata) => {
+        cumulativePaid += rata.kwotaKapitalu;
+        const remaining = Math.max(totalCapital - cumulativePaid, 0);
+        const date = parseISO(rata.data!);
+        const isPast = isBefore(date, now) || isSameMonth(date, now);
+
+        return {
+            date: format(date, "yyyy-MM"),
+            remainingCapital: remaining,
+            isPast,
+        };
+    });
+}

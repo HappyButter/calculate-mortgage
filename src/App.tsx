@@ -6,11 +6,39 @@ import { addMonths, getMonth } from "date-fns";
 import LoadDialog from "./components/LoadDialog";
 import SaveDialog from "./components/SaveDialog";
 import { Rata, Nadplata, KiedyNadplata, KiedyNadplataType, SkutekNadplaty, SkutekNadplatyType } from "./types";
-import { beautifyFloat, dateToString, obliczRatyMalejace2, obliczRatyStale, parseAsArrayOfNadplata, roundToTwo } from "./utils";
+import { aggregateOverpaymentsForChart, beautifyFloat, dateToString, obliczRatyMalejace2, obliczRatyStale, parseAsArrayOfNadplata, prepareBurndownData, prepareRataBarChartData, roundToTwo } from "./utils";
 import useScreen from "./useScreen";
 import NumberInput from "./components/NumberInput";
 import DateInput from "./components/DateInput";
 import Section from "./components/Section";
+import { Bar, BarChart, CartesianGrid, Label, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+
+const Colors = {
+  blue: "#36a2eb",
+  red: "#ff6484",
+  green: "#4bc0c0",
+  orange: "#ff9f3f",
+  purple: "#9966ff",
+  yellow: "#ffcd56",
+  grey: "#cacbcf"
+}
+
+const colorsArray = Object.entries(Colors).map(([_, val]) => val)
+
+function* createColorGenerator() {
+  var id = 0;
+  const id_max = colorsArray.length - 1;
+
+  while (true) {
+    if (id > id_max) {
+      id = 0;
+    }
+    yield colorsArray[id++]
+  }
+}
+
+const colorGen = createColorGenerator();
+const getColor = () => colorGen.next().value as string;
 
 
 function App() {
@@ -44,6 +72,27 @@ function App() {
     return czyRataMalejaca ? obliczRatyMalejace2(rataStart, { nadplaty, dataPierwszejRaty }) : obliczRatyStale(rataStart, { nadplaty });;
   }, [kapital, oprocentowanie, iloscRat, nadplaty, czyRataMalejaca, dataPierwszejRaty]);
 
+  // console.log(raty);
+
+
+  const chartsData = useMemo(() => aggregateOverpaymentsForChart(raty), [raty]);
+  const years = Object.keys(chartsData[0]).filter((k) => k !== "month");
+  const initAcc = years.map(el => ({ year: el, value: 0 }))
+
+  const barChartOverpaymentData = chartsData.reduce((acc, item) => {
+    for (const year of years) {
+      const el = acc.find(el => (el.year == year))
+      if (el) { el.value += item[Number.parseInt(year)]; }
+    }
+    return acc;
+  }, initAcc)
+
+  const barChartData = useMemo(() => prepareRataBarChartData(raty), [raty]);
+  const separatorIndex = barChartData.findIndex((d) => !d.isPast);
+  const separatorLabel = separatorIndex >= 0 ? barChartData[separatorIndex].date : null;
+
+  const burndownChartData = useMemo(() => prepareBurndownData(raty), [raty]);
+
 
   const saveToLocalStorage = useCallback((name: string) => {
     const data = JSON.stringify({ kapital, oprocentowanie, iloscRat, nadplaty, czyRataMalejaca, dataPierwszejRaty });
@@ -72,17 +121,17 @@ function App() {
     }
   }
 
-  if (isMobile && orientation === 'portrait') {
-    return (
-      <div className="phone-rotation-wrapper">
-        <div className="phone">
-        </div>
-        <div className="message">
-          Najpierw obróć urządzenie ;)
-        </div>
-      </div>
-    )
-  }
+  // if (isMobile && orientation === 'portrait') {
+  //   return (
+  //     <div className="phone-rotation-wrapper">
+  //       <div className="phone">
+  //       </div>
+  //       <div className="message">
+  //         Najpierw obróć urządzenie ;)
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <>
@@ -317,6 +366,134 @@ function App() {
         </div>
 
       </Section>
+
+      <br />
+
+      <Section title="wykresiki">
+
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart
+            data={barChartOverpaymentData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey={"year"} />
+            <YAxis />
+            <Tooltip />
+
+            <Bar dataKey="value" stackId="a" fill={colorsArray[0]} />
+            {/* 
+            {years.map((year, index) => (
+              <Bar dataKey={year} fill={colorsArray[index]} name={`${year}`} />
+            ))} */}
+
+          </BarChart>
+        </ResponsiveContainer>
+
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart width={700} height={350} data={chartsData} margin={{ left: 20, top: 20, right: 15 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" label={{ value: "Miesiąc", position: "insideBottomRight", offset: -10 }} />
+            <YAxis>
+              <Label value="Nadpłata (PLN)" position="left" angle={-90} viewBox={{ x: 20, y: 60, width: 100, height: 100 }} />
+            </YAxis>
+            <Tooltip />
+            <Legend />
+            {years.map((year, index) => (
+              <Line
+                key={year}
+                type="monotone"
+                dataKey={year}
+                strokeWidth={2}
+                stroke={colorsArray[index]} // auto color by year
+                name={`${year}`}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+
+        <ResponsiveContainer width="100%" height={400}>
+          <BarChart
+            width={800}
+            height={400}
+            data={barChartData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+
+            {/* Capital part */}
+            <Bar dataKey="kwotaKapitalu" stackId="a" fill={getColor()} name="Kapitał" />
+
+            {/* Interest part */}
+            <Bar dataKey="kwotaOdsetek" stackId="a" fill={getColor()} name="Odsetki" />
+
+            {/* Dotted line separating past/future */}
+            {/* {separatorLabel && (
+              <ReferenceLine
+                x={separatorLabel}
+                stroke="green"
+                // strokeDasharray="5 5"
+                label={{
+                  value: "Dziś",
+                  position: "top",
+                  fill: "#333",
+                  fontSize: 12,
+                }}
+              />
+            )} */}
+          </BarChart>
+        </ResponsiveContainer>
+
+        <ResponsiveContainer width="100%" height={400}>
+          <LineChart
+            data={burndownChartData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="date" />
+            <YAxis
+              label={{
+                value: "Remaining Capital (PLN)",
+                angle: -90,
+                position: "insideLeft",
+              }}
+            />
+            <Tooltip
+              formatter={(v) => `${v.toLocaleString()} PLN`}
+              labelFormatter={(l) => `Month: ${l}`}
+            />
+
+            {/* Main burndown line */}
+            <Line
+              type="monotone"
+              dataKey="remainingCapital"
+              stroke={getColor()}
+              strokeWidth={3}
+              dot={false}
+              name="Remaining Capital"
+            />
+
+            {/* Dotted “today” line */}
+            {separatorLabel && (
+              <ReferenceLine
+                x={separatorLabel}
+                stroke="black"
+                strokeDasharray="5 5"
+                label={{
+                  value: "Today",
+                  position: "top",
+                  fill: "#333",
+                  fontSize: 12,
+                }}
+              />
+            )}
+          </LineChart>
+        </ResponsiveContainer>
+      </Section >
 
       <br />
 

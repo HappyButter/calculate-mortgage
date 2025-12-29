@@ -13,11 +13,14 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@types/recharts": "^2.0.1",
     "date-fns": "^4.1.0",
     "nuqs": "^2.4.1",
     "react": "^19.0.0",
     "react-animate-height": "^3.2.3",
     "react-dom": "^19.0.0",
+    "react-is": "^19.2.0",
+    "recharts": "^3.2.1",
     "remeda": "^2.32.0",
     "uuid": "^11.1.0"
   },
