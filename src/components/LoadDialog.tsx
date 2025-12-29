@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 function LoadDialog({ onClose, loadFromLocalStorage }: { onClose: () => void; loadFromLocalStorage: (name: string) => void }) {
-    const namesUsed = Object.keys(localStorage);
-    const [select, setSelect] = useState(namesUsed ? namesUsed[0] : "");
+    const namesUsed = Object.keys(localStorage).sort();
+    const [select, setSelect] = useState(namesUsed[0] ?? "");
 
     return (
         <dialog open={true} style={{
@@ -24,7 +24,7 @@ function LoadDialog({ onClose, loadFromLocalStorage }: { onClose: () => void; lo
                 backgroundColor: "rgb(167, 167, 167)",
                 padding: "20px",
                 margin: "20px",
-                borderRadius: "5px",
+                borderRadius: "8px",
                 width: "50%",
                 height: "50%",
                 display: "flex",
@@ -36,29 +36,45 @@ function LoadDialog({ onClose, loadFromLocalStorage }: { onClose: () => void; lo
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", width: "100%" }}>
                     <div style={{ display: "flex", flexDirection: "column", marginBottom: "34px" }}>
                         {namesUsed.length === 0
-                            ? "Brak danych w bazie. Najpierw zapisz konfigurację."
+                            ? <>
+                                <h3>Brak danych w bazie. Najpierw zapisz konfigurację.</h3>
+                                <br />
+
+                                <div>
+                                    <button
+                                        style={{ backgroundColor: "rgb(237,129,103)", color: "white", marginLeft: "10px" }}
+                                        onClick={onClose}>Zamknij
+                                    </button>
+                                </div>
+                            </>
+
                             : (
                                 <>
-                                    <label htmlFor="name">Wybierz zapis</label>
+                                    <h3>Wczytaj dane do aplikacji z pamięci przeglądarki</h3>
+                                    <br />
                                     <select value={select} onChange={(e) => setSelect(e.target.value)}
                                         style={{ marginBottom: "10px", width: "100%" }}>
                                         {namesUsed.map((name, index) => (
                                             <option key={`name-${index}`}>{name}</option>
                                         ))}
                                     </select>
-                                    <button
-                                        style={!namesUsed.includes(select) ? {} : { backgroundColor: "rgb(75,175,80)", color: "white" }}
-                                        onClick={() => {loadFromLocalStorage(select); onClose()}} disabled={!namesUsed.includes(select)}>Load from local storage</button>
+
+
+                                    <div>
+                                        <button
+                                            style={{ backgroundColor: "rgb(237,129,103)", color: "white", marginLeft: "10px" }}
+                                            onClick={onClose}>
+                                            Zamknij
+                                        </button>
+                                        <button
+                                            style={!namesUsed.includes(select) ? {} : { backgroundColor: "rgb(75,175,80)", color: "white", marginLeft: "10px" }}
+                                            onClick={() => { loadFromLocalStorage(select); onClose() }} disabled={!namesUsed.includes(select)}>
+                                            Wczytaj
+                                        </button>
+                                    </div>
+
                                 </>)}
                     </div>
-
-                    <div>
-                        <button
-                            style={{ backgroundColor: "rgb(237,129,103)", color: "white", marginLeft: "10px" }}
-                            onClick={onClose}>Zamknij
-                        </button>
-                    </div>
-
                 </div>
             </div>
         </dialog>

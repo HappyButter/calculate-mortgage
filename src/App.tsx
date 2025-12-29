@@ -90,8 +90,8 @@ function App() {
       <h1>Kalkulator kredytowy</h1>
       <br />
 
-      <button onClick={() => setIsSaveDialogOpen(true)} style={{ marginRight: "10px" }}>Zapisz</button>
-      <button onClick={() => setIsLoadDialogOpen(true)}>Załaduj konfigurację</button>
+      <button onClick={() => setIsSaveDialogOpen(true)} style={{ marginRight: "10px", backgroundColor: "#F7F2EC" }}>Zapisz konfigurację</button>
+      <button onClick={() => setIsLoadDialogOpen(true)} style={{ backgroundColor: "#F7F2EC" }}>Wczytaj dane</button>
 
       <br /><br />
 
