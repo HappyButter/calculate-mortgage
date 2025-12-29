@@ -116,7 +116,6 @@ section .section-content {
 section .section-body {
   display: flex;
   justify-content: space-between;
-  align-items: "flex-start";
 }
 
 section .section-body>div {
@@ -210,11 +209,11 @@ tr:hover {
   }
 
   50% {
-    transform: rotate(-90deg)
+    transform: rotate(90deg)
   }
 
   100% {
-    transform: rotate(-90deg)
+    transform: rotate(90deg)
   }
 }
 

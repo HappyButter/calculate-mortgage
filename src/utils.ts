@@ -1,4 +1,4 @@
-import { addMonths, differenceInCalendarDays, getOverlappingDaysInIntervals, isWithinInterval, subDays, subMonths } from "date-fns";
+import { addMonths, differenceInCalendarDays, format, getOverlappingDaysInIntervals, isBefore, isSameMonth, isWithinInterval, parseISO, subDays, subMonths } from "date-fns";
 import { clone } from 'remeda';
 import { Rata, Zmiany, KiedyNadplata, Nadplata, kiedyNadplatyArray, KiedyNadplataType, skutekNadplatyArray, SkutekNadplatyType, SkutekNadplaty } from "./types";
 import { createParser } from 'nuqs'
@@ -54,8 +54,9 @@ export function obliczRatyMalejace(aktualnaRata: Rata, zmiany: Zmiany): Rata[] {
     return listaRat;
 }
 
+type CalculateInstalmentsReturn = Rata[];
 
-export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] {
+export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): CalculateInstalmentsReturn {
     const listaRat: Rata[] = [];
     let dataRaty = zmiany.dataPierwszejRaty ? new Date(zmiany.dataPierwszejRaty) : new Date();
     let dataMiesiacPrzedRata = subMonths(new Date(dataRaty), 1);
@@ -89,7 +90,7 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
                             const odsetkiDoNadplaty = obliczOdsetkiPomiedzyDatami(dataOstatniejSplaty, nadplataData, rataNadplaty.oprocentowanie);
                             const odsetkiDoRaty = obliczOdsetkiPomiedzyDatami(nadplataData, dataRaty, rataNadplaty.oprocentowanie);
                             const z = (1 / (rataNadplaty.iloscRat - rataNadplaty.numerRaty + 1)) + odsetkiDoRaty;
-                            const kwotaNadplaty = (nadplata.kwota - (rataNadplaty.kapital * odsetkiDoNadplaty) - (rataNadplaty.kapital * z)) / (1 - z);
+                            const kwotaNadplaty = (nadplata.kwota - (rataNadplaty.kapital * odsetkiDoNadplaty) - (rataNadplaty.kapital * z)) / (1 - z);                            
 
                             if (kwotaNadplaty < 0) {
                                 break kwotaNadplatyIsLowerThanZero;
@@ -186,7 +187,7 @@ export function obliczRatyMalejace2(aktualnaRata: Rata, zmiany: Zmiany): Rata[] 
 
         // calculate kwotaKapitalu and kwotaOdstek
         const dataOstatniejSplaty = nadplatyPrzedRata.length > 0 && (listaRat[listaRat.length - 1]?.nadplaty?.length ?? -1 > 0)
-            ? new Date(nadplatyPrzedRata[nadplatyPrzedRata.length - 1].data ?? "")
+            ? new Date(listaRat[listaRat.length - 1].data ?? "")
             : dataMiesiacPrzedRata;
 
         nowaRata.kwotaKapitalu = roundToTwoDigits(nowaRata.kapital / (nowaRata.iloscRat - nowaRata.numerRaty + 1)); // tricky part
@@ -299,7 +300,7 @@ export function dateToString(date: Date): string {
 }
 
 
-export function obliczRatyStale(aktualnaRata: Rata, zmiany: Zmiany): Rata[] {
+export function obliczRatyStale(aktualnaRata: Rata, zmiany: Zmiany): CalculateInstalmentsReturn {
     const listaRat: Rata[] = [];
     let nowaRata = { ...aktualnaRata };
 
