@@ -1,54 +1,70 @@
-# React + TypeScript + Vite
+# <img src="./public/kk.svg" width="28" height="28"> Calculate Mortgage 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Calculate Mortgage, czyli kredyt hipoteczny pod kontrolą. 
 
-Currently, two official plugins are available:
+## Kalkulator stworzony z myślą o:
+- śledzeniu przebiegu spłaty kredytu, 
+- symulowaniu rónych scenariuszy spłaty,
+- dokładnym liczenia nadpłat w konkretnym dniu, cyklicznie etc.
+- łatwym dzieleniu się kalkulatorem poprzez URL.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## Expanding the ESLint configuration
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Przykład 1 - nadpłaty
+Załóżmy że 1 dnia miesiąca dysponujesz budżetem na spłatę 4000 PLN. Twoja rata 15 dnia miesiąca wynosi 2000 PLN. Chcesz jednak zadeklarować dyspozycję nadpłaty już 1 dnia miesiąca. 
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+Prosta nadpłata w wysokości 2000 PLN nie załatwia sprawy z dwóch powodów:
+1. Twoja rata zmniejszy się o odsetki, które wcześniej spłacisz razem z nadpłatą.
+2. Dodatkowo od 1 do 15 dnia odsetki będą naliczane od mniejszej kwoty kapitału.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Jak więc do cholery to policzyć ???
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### To proste! 
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+>W kalkulatorze wybierz wybierz "Skutek nadpłaty"[[1]](#skutek-nadplaty).<br/>
+>Potem "Typ nadpłaty"[[2]](#typ-nadplaty): "Wyrównaj do kwoty".<br/>
+>Wpisz kwotę 4000 PLN.<br/>
+>Wybierz też dokładną datę nadpłaty.[[3]](#data-nadplaty)<br/> 
+
+<b>Voilà! Kalkulator policzy to za Ciebie :)</b>
+
+----------
+<a name="skutek-nadplaty"></a>
+[1] <b>Skutek nadpłaty</b>, czyli co bank zrobi z zadeklarowaną dyspozycją nadpłaty? Najpierw spłaci odsetki narosłe do wybranego dnia? Czy pozwoli na 100% nadpłaty kapitału?
+
+<a name="typ-nadplaty"></a>
+[2] <b>Typ nadpłaty</b>, czyli jak Ty chcesz żeby nadpłata była liczona? Opcje są dwie: 
+1. Dana kwota. (chyba jasne ;))
+2. Wyrównaj do kwoty => kwota najbliższej raty + wyliczona kwota nadpłaty = zadana kwota nadpłaty do której wyrównujemy.   
+
+<a name="data-nadplaty"></a>
+[3] <b>Data nadpłaty</b>, wybierz nadpłątę w: 
+1. danym dniu, 
+2. w dniu raty,
+3. cyklicznie co miesiąc w danym dniu, 
+4. cyklicznie co miesiąc w dniu raty.
+
+
+
+## Przykład 2 - zapis/odczyt
+Aplikacja pozawala na zapis stanu kalkulatora do przeglądarki użytkownika.
+> Twoje dane zapisują się tylko na Twoim urządzeniu!  
+
+Pod tytułem strony kliknij "Zapisz konfigurację" > wpisz nazwę pod jaką chcesz zapisać aktualny stan kalkulatora > <b>Voilà!</b>
+
+Teraz gdy ponownie wejdziesz na stronę możesz odczytać zapisane dane. Pod tytułem strony kliknij "Wczytaj dane" > wybierz nazwę pod jaką zapisałeś konfigurację > <b>Voilà!</b>
+
+
+
+
+## Przykład 3 - dzielenie się stanem kalkulatora z innymi! 
+Stan kalkulatora jest zsynchronizowany z adresem URL strony. W skrócie oznacza to że możesz przesłać link znajomemu do Twojego stanu kalkulatora. (Link ten jest dość długi, co pozwala na zapis wszystkich informacji o nadpłatach etc.)
+
+Jak to zrobić? 
+
+> Skonfiguruj kredyt.</br>
+> Dodaj nadpłaty.</br> 
+> Skopiuj Link.</br>
+> Wyślij skopiowany link znajomemu! 
+
+Stan kalkulatora zostanie odtworzony u znajomego na podstawie linku :) 

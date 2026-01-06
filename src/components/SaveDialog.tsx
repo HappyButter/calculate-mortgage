@@ -28,7 +28,7 @@ const SaveDialog = ({ onClose, saveToLocalStorage }: { onClose: () => void; save
                 backgroundColor: "rgb(167, 167, 167)",
                 padding: "20px",
                 margin: "20px",
-                borderRadius: "5px",
+                borderRadius: "8px",
                 width: "50%",
                 height: "50%",
                 display: "flex",
@@ -37,21 +37,23 @@ const SaveDialog = ({ onClose, saveToLocalStorage }: { onClose: () => void; save
                 alignItems: "center",
             }}>
                 <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%", width: "100%" }}>
+                    <h3>Zapisz dane do pamięci przeglądarki pod nazwą:</h3>
+                    <br />
                     <div style={{ display: "flex", flexDirection: "column", marginBottom: isNameUsed ? "10px" : "34px" }}>
-                        <label htmlFor="name">Zapisz pod nazwą</label>
                         <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
                         <div style={{ color: "rgb(208, 59, 59)" }}>{isNameUsed ? "Nazwa wykorzystana. Spróbuj innej." : ""}</div>
                     </div>
 
                     <div>
                         <button
-                            style={isNameUsed ? {} : { backgroundColor: "rgb(75,175,80)", color: "white" }}
-                            onClick={() => { saveToLocalStorage(name); onClose() }} disabled={isNameUsed}>
-                            Zapisz do pamięci przeglądarki
+                            style={{ backgroundColor: "rgb(237,129,103)", color: "white", marginRight: "10px" }}
+                            onClick={onClose}>
+                            Zamknij
                         </button>
                         <button
-                            style={{ backgroundColor: "rgb(237,129,103)", color: "white", marginLeft: "10px" }}
-                            onClick={onClose}>Zamknij
+                            style={isNameUsed ? {} : { backgroundColor: "rgb(75,175,80)", color: "white" }}
+                            onClick={() => { saveToLocalStorage(name); onClose() }} disabled={isNameUsed}>
+                            Zapisz
                         </button>
                     </div>
                 </div>
