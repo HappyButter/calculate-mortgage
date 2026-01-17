@@ -94,7 +94,7 @@ function App() {
       <button onClick={() => setIsLoadDialogOpen(true)} style={{ backgroundColor: "#F7F2EC" }}>Wczytaj dane</button>
 
       <br /><br />
-
+      
       <Section title="Podstawowe dane kredytowe">
         <div className="section-body">
           <NumberInput value={kapital} onChange={setKapital} label="Kwota kredytu" inputAdornment="zł" key={`kapital_${key}`} />
@@ -304,7 +304,7 @@ function App() {
           }
         </div>
 
-        <div style={{ justifyContent: "left", display: "flex", padding: "8px 16px" }}>
+        <div style={{ justifyContent: "center", display: "flex", padding: "8px 16px" }}>
           <button onClick={() => {
             setNadplaty([...nadplaty, {
               id: uuidv4(),
@@ -313,7 +313,7 @@ function App() {
               kiedyNadplata: KiedyNadplata.W_DNIU_RATY,
               numerRatyStart: (nadplaty[nadplaty.length - 1]?.numerRatyStart ?? 0) + 1
             }])
-          }} style={{ backgroundColor: "rgb(75,175,80)", color: "white" }}>Dodaj nadplate</button>
+          }} style={{ backgroundColor: "rgb(75,175,80)", color: "white" }}>Dodaj nadplatę</button>
         </div>
 
       </Section>
@@ -325,9 +325,8 @@ function App() {
           <table>
             <thead>
               <tr>
-                {/* <th>Rok</th> */}
-                <th style={{ textAlign: "center", padding: "0.35rem" }}>Numer raty</th>
-                <th style={{ textAlign: "left", padding: "0.35rem" }}>Data</th>
+                <th style={{ textAlign: "center" }}>Numer raty</th>
+                <th style={{ textAlign: "left" }}>Data</th>
                 <th>Kapital do spłaty</th>
                 <th>Rata</th>
                 <th>Kapitał</th>
@@ -346,9 +345,8 @@ function App() {
                       : rata.numerRaty % 12 === 0)
                       ? "#646cff" : "black",
                 }}>
-                  {/* <td>{rata.numerRaty % 12 === 1 ? (Math.floor(rata.numerRaty / 12) + 1) : null}</td> */}
-                  <td style={{ textAlign: "center", padding: "0.35rem" }}>{beautifyFloat(rata.numerRaty)}</td>
-                  <td style={{ textAlign: "left", padding: "0.35rem" }}>{rata.data}</td>
+                  <td style={{ textAlign: "center" }}>{beautifyFloat(rata.numerRaty)}</td>
+                  <td style={{ textAlign: "left" }}>{rata.data}</td>
                   <td>{roundToTwo(rata.kapital)} zł</td>
                   <td><b>{roundToTwo(rata.kwotaCalkowita)} zł</b></td>
                   <td>{roundToTwo(rata.kwotaKapitalu)} zł</td>
