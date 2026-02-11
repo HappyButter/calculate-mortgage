@@ -21,7 +21,7 @@ Jak więc do cholery to policzyć ???
 
 ### To proste! 
 
->W kalkulatorze wybierz wybierz "Skutek nadpłaty"[[1]](#skutek-nadplaty).<br/>
+>W kalkulatorze wybierz "Skutek nadpłaty"[[1]](#skutek-nadplaty) - czyli jak bank potraktuje Twoją nadpłatę.<br/>
 >Potem "Typ nadpłaty"[[2]](#typ-nadplaty): "Wyrównaj do kwoty".<br/>
 >Wpisz kwotę 4000 PLN.<br/>
 >Wybierz też dokładną datę nadpłaty.[[3]](#data-nadplaty)<br/> 
