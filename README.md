@@ -14,7 +14,7 @@ Calculate Mortgage, czyli kredyt hipoteczny pod kontrolą.
 Załóżmy że 1 dnia miesiąca dysponujesz budżetem na spłatę 4000 PLN. Twoja rata 15 dnia miesiąca wynosi 2000 PLN. Chcesz jednak zadeklarować dyspozycję nadpłaty już 1 dnia miesiąca. 
 
 Prosta nadpłata w wysokości 2000 PLN nie załatwia sprawy z dwóch powodów:
-1. Twoja rata zmniejszy się o odsetki, które wcześniej spłacisz razem z nadpłatą.
+1. Twoja rata 15 dnia miesiąca zmniejszy się o odsetki, które wcześniej spłacasz razem z nadpłatą.
 2. Dodatkowo od 1 do 15 dnia odsetki będą naliczane od mniejszej kwoty kapitału.
 
 Jak więc do cholery to policzyć ???
